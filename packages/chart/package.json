@@ -1,6 +1,6 @@
 {
   "name": "@delon-fork/chart",
-  "version": "0.0.0-PLACEHOLDER",
+  "version": "8.8.0",
   "author": "cipchk<cipchk@qq.com>",
   "license": "MIT",
   "repository": {
@@ -25,8 +25,8 @@
     "component"
   ],
   "dependencies": {
-    "@delon/util": "PEER-0.0.0-PLACEHOLDER",
-    "@delon/theme": "PEER-0.0.0-PLACEHOLDER"
+    "@delon/util": "8.8.0",
+    "@delon/theme": "8.8.0"
   },
   "sideEffects": false
 }
