@@ -1,5 +1,5 @@
 {
-  "name": "delon",
+  "name": "delon-fork",
   "version": "8.8.0",
   "description": "Delon is a set of essential modules for NG-ALAIN.",
   "keywords": [
@@ -145,8 +145,6 @@
     "ng-alain-sts": "^0.0.1"
   },
   "husky": {
-    "hooks": {
-      "commit-msg": "node ./scripts/git/commit-msg.js -E HUSKY_GIT_PARAMS"
-    }
+   
   }
 }
