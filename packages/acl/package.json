@@ -1,5 +1,5 @@
 {
-  "name": "@delon-fork/acl",
+  "name": "@delon/acl",
   "version": "0.0.0-PLACEHOLDER",
   "author": "cipchk<cipchk@qq.com>",
   "license": "MIT",
@@ -26,7 +26,7 @@
     "component"
   ],
   "dependencies": {
-    "@delon-fork/util": "PEER-0.0.0-PLACEHOLDER"
+    "@delon/util": "PEER-0.0.0-PLACEHOLDER"
   },
   "sideEffects": false
 }

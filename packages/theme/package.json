@@ -1,5 +1,5 @@
 {
-  "name": "@delon-fork/theme",
+  "name": "@delon/theme",
   "version": "0.0.0-PLACEHOLDER",
   "author": "cipchk<cipchk@qq.com>",
   "license": "MIT",
@@ -22,8 +22,8 @@
   ],
   "dependencies": {
     "ng-zorro-antd": "ZORRO-0.0.0-PLACEHOLDER",
-    "@delon-fork/acl": "PEER-0.0.0-PLACEHOLDER",
-    "@delon-fork/util": "PEER-0.0.0-PLACEHOLDER"
+    "@delon/acl": "PEER-0.0.0-PLACEHOLDER",
+    "@delon/util": "PEER-0.0.0-PLACEHOLDER"
   },
   "sideEffects": false
 }

@@ -1,5 +1,5 @@
 {
-  "name": "@delon-fork/form",
+  "name": "@delon/form",
   "version": "0.0.0-PLACEHOLDER",
   "author": "cipchk<cipchk@qq.com>",
   "license": "MIT",
@@ -28,9 +28,9 @@
     "component"
   ],
   "dependencies": {
-    "@delon-fork/theme": "PEER-0.0.0-PLACEHOLDER",
-    "@delon-fork/acl": "PEER-0.0.0-PLACEHOLDER",
-    "@delon-fork/util": "PEER-0.0.0-PLACEHOLDER"
+    "@delon/theme": "PEER-0.0.0-PLACEHOLDER",
+    "@delon/acl": "PEER-0.0.0-PLACEHOLDER",
+    "@delon/util": "PEER-0.0.0-PLACEHOLDER"
   },
   "sideEffects": false
 }
