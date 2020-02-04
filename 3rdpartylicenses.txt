@@ -61,13 +61,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 @ant-design/icons-angular
 MIT
 
-@delon/form
+@delon-fork/form
 MIT
 
-@delon/theme
+@delon-fork/theme
 MIT
 
-@delon/util
+@delon-fork/util
 MIT
 
 @stackblitz/sdk
@@ -528,16 +528,16 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 @delon-fork/abc
 MIT
 
-@delon/acl
+@delon-fork/acl
 MIT
 
-@delon/cache
+@delon-fork/cache
 MIT
 
-@delon/chart
+@delon-fork/chart
 MIT
 
-@delon/mock
+@delon-fork/mock
 MIT
 
 @ngx-translate/core
