@@ -28,9 +28,9 @@
     "component"
   ],
   "dependencies": {
-    "@delon/theme": "PEER-0.0.0-PLACEHOLDER",
-    "@delon/acl": "PEER-0.0.0-PLACEHOLDER",
-    "@delon/util": "PEER-0.0.0-PLACEHOLDER"
+    "@delon-fork/theme": "PEER-0.0.0-PLACEHOLDER",
+    "@delon-fork/acl": "PEER-0.0.0-PLACEHOLDER",
+    "@delon-fork/util": "PEER-0.0.0-PLACEHOLDER"
   },
   "sideEffects": false
 }
