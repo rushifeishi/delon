@@ -28,9 +28,9 @@
     "component"
   ],
   "dependencies": {
-    "@delon/theme": "8.8.0-beta1",
-    "@delon/acl": "8.8.0-beta1",
-    "@delon/util": "8.8.0-beta1"
+    "@delon-fork/theme": "8.8.0-beta1",
+    "@delon-fork/acl": "8.8.0-beta1",
+    "@delon-fork/util": "8.8.0-beta1"
   },
   "sideEffects": false
 }
