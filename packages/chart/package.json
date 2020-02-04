@@ -1,6 +1,6 @@
 {
   "name": "@delon-fork/chart",
-  "version": "8.8.0-beta1",
+  "version": "8.8.0-beta2",
   "author": "cipchk<cipchk@qq.com>",
   "license": "MIT",
   "repository": {
@@ -25,8 +25,8 @@
     "component"
   ],
   "dependencies": {
-    "@delon-fork/util": "8.8.0-beta1",
-    "@delon-fork/theme": "8.8.0-beta1"
+    "@delon-fork/util": "8.8.0-beta2",
+    "@delon-fork/theme": "8.8.0-beta2"
   },
   "sideEffects": false
 }

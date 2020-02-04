@@ -1,6 +1,6 @@
 {
   "name": "@delon-fork/theme",
-  "version": "8.8.0-beta1",
+  "version": "8.8.0-beta2",
   "author": "cipchk<cipchk@qq.com>",
   "license": "MIT",
   "repository": {
@@ -21,9 +21,9 @@
     "component"
   ],
   "dependencies": {
-    "ng-zorro-antd": "ZORRO-0.0.0-PLACEHOLDER",
-    "@delon-fork/acl": "8.8.0-beta1",
-    "@delon-fork/util": "8.8.0-beta1"
+    "ng-zorro-antd": "^8.5.2",
+    "@delon-fork/acl": "8.8.0-beta2",
+    "@delon-fork/util": "8.8.0-beta2"
   },
   "sideEffects": false
 }

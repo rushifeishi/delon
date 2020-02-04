@@ -1,6 +1,6 @@
 {
   "name": "@delon-fork/abc",
-  "version": "8.8.0-beta1",
+  "version": "8.8.0-beta2",
   "author": "cipchk<cipchk@qq.com>",
   "license": "MIT",
   "repository": {
@@ -24,9 +24,9 @@
     "file-saver": "^1.3.3",
     "ngx-countdown": "^8.0.0",
     "qrious": "^4.0.2",
-    "@delon-fork/theme": "8.8.0-beta1",
-    "@delon-fork/util": "8.8.0-beta1",
-    "@delon-fork/acl": "8.8.0-beta1"
+    "@delon-fork/theme": "8.8.0-beta2",
+    "@delon-fork/util": "8.8.0-beta2",
+    "@delon-fork/acl": "8.8.0-beta2"
   },
   "sideEffects": false
 }
