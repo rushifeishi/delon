@@ -29,7 +29,7 @@
  
 进入dist/@delon/abc目录，修改package.json中的name为"delon-fork/abc"、version为"8.8.0-beta8", 然后执行 ``` npm publish --access=public  ```
 
-* 
+然后就可以在`https://www.npmjs.com/package/@delon-fork/abc`看到了 
 
 > 参考文档
 https://segmentfault.com/a/1190000006250554
