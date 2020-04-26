@@ -1,6 +1,6 @@
-import { Observable } from 'rxjs';
-
 import { HttpParams } from '@angular/common/http';
+import { NzSafeAny } from 'ng-zorro-antd/core/types';
+import { Observable } from 'rxjs';
 import { _HttpClient } from './http.client';
 import {
   BaseApi,
@@ -8,17 +8,18 @@ import {
   BaseUrl,
   Body,
   DELETE,
+  FORM,
   GET,
-  Headers,
   HEAD,
+  Headers,
   JSONP,
   OPTIONS,
-  Path,
   PATCH,
+  Path,
+  Payload,
   POST,
   PUT,
   Query,
-  Payload,
 } from './http.decorator';
 
 @BaseUrl('/user')
@@ -101,6 +102,11 @@ class MockService extends BaseApi {
 
   @JSONP()
   JSONP(): Observable<any> {
+    return null as any;
+  }
+
+  @FORM()
+  FORM(): Observable<any> {
     return null as any;
   }
 
@@ -245,10 +251,17 @@ describe('theme: http.decorator', () => {
 
   [`DELETE`, `OPTIONS`, `PUT`, `HEAD`, `PATCH`, `JSONP`].forEach(type => {
     it(`should construct a ${type} request`, () => {
-      srv[type]();
+      (srv as NzSafeAny)[type]();
       expect(request).toHaveBeenCalled();
       expect(request.calls.mostRecent().args[0]).toBe(type);
     });
+  });
+
+  it(`should be include content-type is application/x-www-form-urlencoded via FORM`, () => {
+    srv.FORM();
+    expect(request).toHaveBeenCalled();
+    const arg = request.calls.mostRecent().args[2];
+    expect(arg.headers['content-type']).toBe(`application/x-www-form-urlencoded`);
   });
 
   describe('PAYLOAD', () => {

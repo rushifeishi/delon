@@ -6,7 +6,6 @@ import { DelonLocaleModule } from '@delon/theme';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzMenuModule } from 'ng-zorro-antd/menu';
 import { NzTabsModule } from 'ng-zorro-antd/tabs';
-
 import { ReuseTabContextMenuComponent } from './reuse-tab-context-menu.component';
 import { ReuseTabContextComponent } from './reuse-tab-context.component';
 import { ReuseTabContextDirective } from './reuse-tab-context.directive';
@@ -18,7 +17,6 @@ const NOEXPORTS = [ReuseTabContextMenuComponent, ReuseTabContextComponent, Reuse
 @NgModule({
   imports: [CommonModule, RouterModule, DelonLocaleModule, NzMenuModule, NzTabsModule, NzIconModule, OverlayModule],
   declarations: [...COMPONENTS, ...NOEXPORTS],
-  entryComponents: [ReuseTabContextMenuComponent],
   exports: [...COMPONENTS],
 })
 export class ReuseTabModule {}

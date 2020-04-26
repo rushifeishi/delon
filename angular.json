@@ -17,11 +17,10 @@
             "tsConfig": "src/tsconfig.json",
             "polyfills": "src/polyfills.ts",
             "assets": [
-              "src/assets",
-              "src/_redirects"
+              "src/assets"
             ],
             "styles": [
-              "node_modules/ngx-simplemde/src/index.css",
+              "node_modules/ngx-simplemde/lib/index.less",
               "node_modules/aos/dist/aos.css",
               "node_modules/docsearch.js/dist/cdn/docsearch.css",
               "src/styles.less"
@@ -29,9 +28,6 @@
             "scripts": [
               "node_modules/aos/dist/aos.js",
               "node_modules/simplemde-antd/dist/simplemde.min.js",
-              "node_modules/@antv/g2/dist/g2.min.js",
-              "node_modules/@antv/data-set/dist/data-set.min.js",
-              "node_modules/@antv/g2-plugin-slider/dist/g2-plugin-slider.min.js",
               "node_modules/ajv/dist/ajv.bundle.js",
               "node_modules/qrious/dist/qrious.min.js",
               "node_modules/ace-builds/src-min/ace.js",
@@ -101,9 +97,6 @@
             "polyfills": "packages/polyfills.ts",
             "tsConfig": "packages/tsconfig.spec.json",
             "scripts": [
-              "node_modules/@antv/g2/dist/g2.min.js",
-              "node_modules/@antv/data-set/dist/data-set.min.js",
-              "node_modules/@antv/g2-plugin-slider/dist/g2-plugin-slider.min.js",
               "node_modules/ajv/dist/ajv.bundle.js",
               "node_modules/qrious/dist/qrious.min.js"
             ],
@@ -116,14 +109,5 @@
       }
     }
   },
-  "defaultProject": "site",
-  "schematics": {
-    "@schematics/angular:component": {
-      "prefix": "app",
-      "styleext": "less"
-    },
-    "@schematics/angular:directive": {
-      "prefix": "app"
-    }
-  }
+  "defaultProject": "site"
 }

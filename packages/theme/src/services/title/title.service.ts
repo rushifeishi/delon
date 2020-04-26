@@ -54,9 +54,15 @@ export class TitleService implements OnDestroy {
   default = `Not Page Name`;
 
   private getByElement(): string {
-    const el = this.doc.querySelector('.alain-default__content-title h1') || this.doc.querySelector('.page-header__title');
+    const el = (this.doc.querySelector('.alain-default__content-title h1') || this.doc.querySelector('.page-header__title')) as HTMLElement;
     if (el) {
-      return el.firstChild.textContent.trim();
+      let text = '';
+      el.childNodes.forEach(val => {
+        if (!text && val.nodeType === 3) {
+          text = val.textContent!.trim();
+        }
+      });
+      return text || el.firstChild!.textContent!.trim();
     }
     return '';
   }
@@ -76,7 +82,7 @@ export class TitleService implements OnDestroy {
     const item = menus[menus.length - 1];
     let title;
     if (item.i18n && this.i18nSrv) title = this.i18nSrv.fanyi(item.i18n);
-    return title || item.text;
+    return title || item.text!;
   }
 
   private _setTitle(title?: string | string[]) {

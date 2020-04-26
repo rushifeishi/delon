@@ -1,23 +1,21 @@
 import { Component } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { configureTestSuite, createTestContext } from '@delon/testing';
-import addSeconds from 'date-fns/add_seconds';
-
-import { CountDownModule } from './count-down.module';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { createTestContext } from '@delon/testing';
+import addSeconds from 'date-fns/addSeconds';
 import { CountdownConfig } from 'ngx-countdown';
+import { CountDownModule } from './count-down.module';
 
 describe('abc: count-down', () => {
   let fixture: ComponentFixture<TestComponent>;
   let context: TestComponent;
 
-  configureTestSuite(() => {
+  beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [CountDownModule],
       declarations: [TestComponent],
     });
+    ({ fixture, context } = createTestContext(TestComponent));
   });
-
-  beforeEach(() => ({ fixture, context } = createTestContext(TestComponent)));
 
   it('should be create an instance via [config]', fakeAsync(() => {
     spyOn(context, 'handleEvent');
@@ -45,35 +43,12 @@ describe('abc: count-down', () => {
     tick(1001);
     expect(context.handleEvent).toHaveBeenCalled();
   }));
-
-  it('should be compatible old events', fakeAsync(() => {
-    spyOn(context, 'begin');
-    spyOn(context, 'notify');
-    spyOn(context, 'end');
-    context.config = {
-      leftTime: 2,
-      notify: [1.5],
-    };
-    fixture.detectChanges();
-    expect(context.begin).toHaveBeenCalled();
-    tick(1501);
-    expect(context.notify).toHaveBeenCalled();
-    tick(2001);
-    expect(context.end).toHaveBeenCalled();
-  }));
 });
 
 @Component({
   template: `
     <div *ngIf="config">
-      <count-down
-        [config]="config"
-        (begin)="begin()"
-        (end)="end()"
-        (notify)="notify($event)"
-        (event)="handleEvent()"
-        style="font-size: 20px"
-      ></count-down>
+      <count-down [config]="config" (event)="handleEvent()" style="font-size: 20px"></count-down>
     </div>
     <div *ngIf="target">
       <count-down [target]="target" (event)="handleEvent()" style="font-size: 20px"></count-down>
@@ -84,7 +59,4 @@ class TestComponent {
   config: CountdownConfig;
   target: number | Date;
   handleEvent() {}
-  notify() {}
-  begin() {}
-  end() {}
 }

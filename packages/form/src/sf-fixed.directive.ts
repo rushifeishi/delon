@@ -6,9 +6,7 @@ export class SFFixedDirective implements AfterViewInit, OnChanges {
   private el: HTMLDivElement;
   private _inited = false;
 
-  @Input('fixed-label')
-  @InputNumber()
-  num: number;
+  @Input('fixed-label') @InputNumber() num: number;
 
   private init() {
     if (!this._inited || this.num == null || this.num <= 0) return;
@@ -18,9 +16,10 @@ export class SFFixedDirective implements AfterViewInit, OnChanges {
     const unit = this.num + 'px';
     if (labelEl) {
       this.render.setStyle(labelEl, 'width', unit);
+      this.render.setStyle(labelEl, 'max-width', unit);
       this.render.setStyle(labelEl, 'flex', `0 0 ${unit}`);
     } else {
-      const controlEl = widgetEl.querySelector('.ant-form-item-control-wrapper');
+      const controlEl = widgetEl.querySelector('.ant-form-item-control');
       this.render.setStyle(controlEl, 'margin-left', unit);
     }
   }

@@ -9,9 +9,10 @@ import {
   OnInit,
   ViewEncapsulation,
 } from '@angular/core';
+import { Chart } from '@antv/g2';
+import { LooseObject } from '@antv/g2/lib/interface';
+import { AlainConfigService } from '@delon/theme';
 import { InputBoolean, InputNumber } from '@delon/util';
-
-declare var G2: any;
 
 @Component({
   selector: 'g2-single-bar',
@@ -25,7 +26,7 @@ declare var G2: any;
   encapsulation: ViewEncapsulation.None,
 })
 export class G2SingleBarComponent implements OnInit, OnChanges, OnDestroy {
-  private chart: any;
+  private chart: Chart;
 
   // #region fields
 
@@ -39,43 +40,44 @@ export class G2SingleBarComponent implements OnInit, OnChanges, OnDestroy {
   @Input() @InputNumber() value = 0;
   @Input() @InputBoolean() line = false;
   @Input() format: (value: number, item: {}, index: number) => string;
-  @Input() padding: any = 0;
+  @Input() padding: number | number[] | 'auto' = 0;
   @Input() textStyle: any = { fontSize: 12, color: '#595959' };
+  @Input() theme: string | LooseObject;
 
   // #endregion
 
-  constructor(private el: ElementRef, private ngZone: NgZone) {}
+  constructor(private el: ElementRef, private ngZone: NgZone, configSrv: AlainConfigService) {
+    configSrv.attachKey(this, 'chart', 'theme');
+  }
 
   private install() {
-    const { el, height, padding, textStyle, line, format } = this;
-    const chart = (this.chart = new G2.Chart({
+    const { el, height, padding, textStyle, line, format, theme } = this;
+    const chart = (this.chart = new Chart({
       container: el.nativeElement,
-      forceFit: true,
+      autoFit: true,
       height,
       padding,
+      theme,
     }));
     chart.legend(false);
     chart.axis(false);
-    chart.tooltip({ type: 'mini' });
-    chart.coord().transpose();
+    chart.tooltip(false);
+    chart.coordinate().transpose();
     chart
       .interval()
       .position('1*value')
-      .opacity(1)
-      .label('value', val => ({
+      .label('value', () => ({
         formatter: format,
-        offset: val > 0 ? 10 : -10,
-        textStyle: {
+        style: {
           ...textStyle,
-          textAlign: val > 0 ? 'start' : 'end',
         },
       }));
 
     if (line) {
-      chart.guide().line({
+      chart.annotation().line({
         start: ['50%', '0%'],
         end: ['50%', '100%'],
-        lineStyle: {
+        style: {
           stroke: '#e8e8e8',
           lineDash: [0, 0],
         },
@@ -90,14 +92,11 @@ export class G2SingleBarComponent implements OnInit, OnChanges, OnDestroy {
   private attachChart() {
     const { chart, height, padding, value, min, max, plusColor, minusColor, barSize } = this;
     if (!chart) return;
-    chart.source([{ value }], { value: { max, min } });
-    chart.set('height', height);
-    chart.set('padding', padding);
-    chart
-      .get('geoms')[0]
-      .color('value', val => (val > 0 ? plusColor : minusColor))
-      .size(barSize);
-    chart.repaint();
+    chart.scale({ value: { max, min } });
+    chart.height = height;
+    chart.padding = padding;
+    chart.geometries[0].color('value', (val: number) => (val > 0 ? plusColor : minusColor)).size(barSize);
+    chart.changeData([{ value }]);
   }
 
   ngOnInit() {

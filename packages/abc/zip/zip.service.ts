@@ -1,16 +1,23 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { AlainConfigService, AlainZipConfig } from '@delon/theme';
 import { LazyResult, LazyService } from '@delon/util';
 import { saveAs } from 'file-saver';
-
-import { ZipConfig } from './zip.config';
+import { NzSafeAny } from 'ng-zorro-antd/core/types';
 import { ZipSaveOptions } from './zip.types';
 
 declare var JSZip: any;
 
 @Injectable({ providedIn: 'root' })
 export class ZipService {
-  constructor(private cog: ZipConfig, private http: HttpClient, private lazy: LazyService) {}
+  private cog: AlainZipConfig;
+
+  constructor(private http: HttpClient, private lazy: LazyService, configSrv: AlainConfigService) {
+    this.cog = configSrv.merge<AlainZipConfig, 'zip'>('zip', {
+      url: '//cdn.bootcss.com/jszip/3.3.0/jszip.min.js',
+      utils: [],
+    });
+  }
 
   private init(): Promise<LazyResult[]> {
     return this.lazy.load([this.cog.url!].concat(this.cog.utils!));
@@ -28,7 +35,7 @@ export class ZipService {
         if (typeof fileOrUrl === 'string') {
           this.http.request('GET', fileOrUrl, { responseType: 'arraybuffer' }).subscribe(
             (res: ArrayBuffer) => {
-              JSZip.loadAsync(res, options).then(ret => resolve(ret));
+              JSZip.loadAsync(res, options).then((ret: NzSafeAny) => resolve(ret));
             },
             (err: any) => {
               reject(err);
@@ -39,7 +46,7 @@ export class ZipService {
         // from file
         const reader: FileReader = new FileReader();
         reader.onload = (e: any) => {
-          JSZip.loadAsync(e.target.result, options).then(ret => resolve(ret));
+          JSZip.loadAsync(e.target.result, options).then((ret: NzSafeAny) => resolve(ret));
         };
         reader.readAsBinaryString(fileOrUrl as File);
       });
@@ -93,7 +100,7 @@ export class ZipService {
           saveAs(data, opt.filename || 'download.zip');
           resolve();
         },
-        err => {
+        (err: NzSafeAny) => {
           reject(err);
         },
       );

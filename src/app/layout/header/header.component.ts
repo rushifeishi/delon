@@ -2,9 +2,9 @@
 import { AfterViewInit, Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { copy } from '@delon/util';
+import { NzSafeAny } from 'ng-zorro-antd/core/types';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { filter } from 'rxjs/operators';
-
 import { I18NService } from '../../core/i18n/service';
 import { MetaService } from '../../core/meta.service';
 import { MobileService } from '../../core/mobile.service';
@@ -22,8 +22,8 @@ declare const docsearch: any;
 export class HeaderComponent implements OnInit, AfterViewInit {
   isMobile: boolean;
   useDocsearch = true;
-  oldVersionList = [`1.x`];
-  currentVersion = 'stable';
+  oldVersionList = [`8.x`, `1.x`];
+  currentVersion = '9.0.0';
   delon = ['theme', 'auth', 'acl', 'form', 'cache', 'chart', 'mock', 'util'];
 
   @ViewChild('searchInput', { static: false })
@@ -72,7 +72,7 @@ export class HeaderComponent implements OnInit, AfterViewInit {
         hitsPerPage: 5,
         facetFilters: [`tags:${this.i18n.zone}`],
       },
-      transformData(hits) {
+      transformData(hits: NzSafeAny[]) {
         hits.forEach(hit => {
           hit.url = hit.url.replace('ng.ant.design', location.host);
           hit.url = hit.url.replace('https:', location.protocol);

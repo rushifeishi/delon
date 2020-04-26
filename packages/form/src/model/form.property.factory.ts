@@ -1,9 +1,9 @@
 import { DelonFormConfig } from '../config';
+import { SF_SEQ } from '../const';
 import { SFSchema } from '../schema/index';
 import { SFUISchema, SFUISchemaItem } from '../schema/ui';
 import { retrieveSchema } from '../utils';
 import { SchemaValidatorFactory } from '../validator.factory';
-import { SF_SEQ } from '../const';
 import { ArrayProperty } from './array.property';
 import { BooleanProperty } from './boolean.property';
 import { FormProperty, PropertyGroup } from './form.property';
@@ -61,7 +61,7 @@ export class FormPropertyFactory {
         else if ((ui as SFUISchemaItem).widget === 'time')
           ui._format = schema.type === 'string' ? this.options.uiTimeStringFormat : this.options.uiTimeNumberFormat;
       } else {
-        ui._format = ui.format;
+        ui._format = schema.format || ui.format;
       }
       switch (schema.type) {
         case 'integer':

@@ -34,6 +34,8 @@ export interface SFSchemaEnum {
    */
   group?: boolean;
 
+  isLeaf?: boolean;
+
   /** 组对应的子类 */
   children?: SFSchemaEnum[];
 }
@@ -48,6 +50,7 @@ export type SFSchemaEnumType = SFSchemaEnum | number | string | boolean;
  * **注意：** 所有结构都以标准为基准，除了 `ui` 属性为非标准单纯只是为了更好的开发
  */
 export interface SFSchema {
+  [key: string]: any;
   //////////// Any /////////////
   /**
    * 数据类型，支持 JavaScript 基础类型；注意项：

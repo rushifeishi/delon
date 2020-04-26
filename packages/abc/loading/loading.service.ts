@@ -1,17 +1,18 @@
-import { Injectable, ComponentRef, OnDestroy } from '@angular/core';
 import { Overlay, OverlayRef } from '@angular/cdk/overlay';
 import { ComponentPortal } from '@angular/cdk/portal';
-import { Subject, timer, Subscription } from 'rxjs';
+import { ComponentRef, Injectable, OnDestroy } from '@angular/core';
+import { AlainConfigService, AlainLoadingConfig } from '@delon/theme';
+import { Subject, Subscription, timer } from 'rxjs';
 import { debounce } from 'rxjs/operators';
-import { LoadingShowOptions } from './loading.interfaces';
-import { LoadingConfig } from './loading.config';
 import { LoadingDefaultComponent } from './loading.component';
+import { LoadingShowOptions } from './loading.types';
 
 @Injectable({ providedIn: 'root' })
 export class LoadingService implements OnDestroy {
   private _overlayRef: OverlayRef;
   private compRef: ComponentRef<LoadingDefaultComponent> | null = null;
   private opt: LoadingShowOptions | null = null;
+  private cog: AlainLoadingConfig;
   private n$ = new Subject();
   private loading$: Subscription;
 
@@ -19,12 +20,20 @@ export class LoadingService implements OnDestroy {
     return this.compRef != null ? this.compRef.instance : null;
   }
 
-  constructor(private cog: LoadingConfig, private overlay: Overlay) {
+  constructor(private overlay: Overlay, configSrv: AlainConfigService) {
+    this.cog = configSrv.merge<AlainLoadingConfig, 'loading'>('loading', {
+      type: 'spin',
+      text: '加载中...',
+      icon: {
+        type: 'loading',
+        theme: 'outline',
+        spin: true,
+      },
+      delay: 0,
+    });
     this.loading$ = this.n$
       .asObservable()
-      .pipe(
-        debounce(() => timer(this.opt!.delay)),
-      )
+      .pipe(debounce(() => timer(this.opt!.delay)))
       .subscribe(() => this.create());
   }
 
@@ -34,11 +43,7 @@ export class LoadingService implements OnDestroy {
     this._close(false);
 
     this._overlayRef = this.overlay.create({
-      positionStrategy: this.overlay
-        .position()
-        .global()
-        .centerHorizontally()
-        .centerVertically(),
+      positionStrategy: this.overlay.position().global().centerHorizontally().centerVertically(),
       scrollStrategy: this.overlay.scrollStrategies.block(),
       hasBackdrop: true,
       backdropClass: 'loading-backdrop',
@@ -51,7 +56,6 @@ export class LoadingService implements OnDestroy {
 
   open(options?: LoadingShowOptions): void {
     this.opt = { ...this.cog, ...options };
-
     this.n$.next();
   }
 

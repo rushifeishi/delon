@@ -1,11 +1,10 @@
+import { LayoutModule } from '@angular/cdk/layout';
+import { HttpClientModule } from '@angular/common/http';
 import { APP_INITIALIZER, Injector, NgModule } from '@angular/core';
 import { createCustomElement } from '@angular/elements';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-
-import { HttpClientModule } from '@angular/common/http';
 import { TranslateModule } from '@ngx-translate/core';
-import { LayoutModule } from '@angular/cdk/layout';
 
 // angular i18n
 import { registerLocaleData } from '@angular/common';
@@ -23,12 +22,13 @@ import { AppComponent } from './app.component';
 import { HeaderComponent } from './layout/header/header.component';
 import { LayoutComponent } from './layout/layout.component';
 
-import { DelonModule } from './delon.module';
+import { GlobalConfigModule } from './global-config.module';
 
 import { SimplemdeModule } from 'ngx-simplemde';
 import { NgxTinymceModule } from 'ngx-tinymce';
 import { UEditorModule } from 'ngx-ueditor';
 import { JsonSchemaModule } from './shared/json-schema/json-schema.module';
+import { STWidgetModule } from './shared/st-widget/st-widget.module';
 
 import { ExampleModule, EXAMPLE_COMPONENTS } from './routes/gen/examples';
 import { IconComponent } from './shared/components/icon/icon.component';
@@ -42,10 +42,11 @@ export function StartupServiceFactory(startupService: StartupService) {
     BrowserModule,
     BrowserAnimationsModule,
     HttpClientModule,
-    DelonModule.forRoot(),
+    GlobalConfigModule.forRoot(),
     LayoutModule,
     SharedModule,
     JsonSchemaModule,
+    STWidgetModule,
     RoutesModule,
     ExampleModule,
     // i18n

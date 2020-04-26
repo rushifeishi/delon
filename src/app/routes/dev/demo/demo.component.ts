@@ -1,54 +1,39 @@
 import { Component } from '@angular/core';
-import { SFSchema, SFMentionWidgetSchema } from '@delon/form';
-import { MentionOnSearchTypes } from 'ng-zorro-antd/mention';
-import { NzMessageService } from 'ng-zorro-antd/message';
-import { of } from 'rxjs';
-import { delay } from 'rxjs/operators';
-
-const DATA = ['asdf', 'cipchk', '中文', 'にほんご'];
+import { STColumn } from '@delon/abc/st';
 
 @Component({
   selector: 'app-demo',
   template: `
-    <sf [schema]="schema" (formSubmit)="submit($event)"></sf>
+    <st [data]="users" [columns]="columns" [expand]="expand" expandRowByClick expandAccordion>
+      <ng-template #expand let-item let-index="index" let-column="column">
+        {{ item.description }}
+      </ng-template>
+    </st>
   `,
 })
 export class DemoComponent {
-  schema: SFSchema = {
-    properties: {
-      remark: {
-        type: 'string',
-        title: '描述',
-        enum: DATA,
-        minimum: 2,
-        maximum: 5,
-        ui: {
-          widget: 'mention',
-          inputStyle: 'textarea',
-        } as SFMentionWidgetSchema,
-      },
-      // 异步静态数据源
-      async: {
-        type: 'string',
-        title: 'Async',
-        ui: {
-          widget: 'mention',
-          asynxcData: () => of(DATA).pipe(delay(1000)),
-        } as SFMentionWidgetSchema,
-      },
-      // 实时数据
-      real_time: {
-        type: 'string',
-        title: 'RealTime',
-        ui: {
-          widget: 'mention',
-          loadData: (option: MentionOnSearchTypes) => of(DATA.filter(item => item.indexOf(option.value) !== -1)).pipe(delay(300)),
-        } as SFMentionWidgetSchema,
-      },
+  users: any[] = Array(10)
+    .fill({})
+    .map((_item: any, idx: number) => {
+      return {
+        id: idx + 1,
+        name: `name ${idx + 1}`,
+        age: Math.ceil(Math.random() * 10) + 20,
+        // 是否显示展开按钮
+        showExpand: idx !== 0,
+        description: `${idx + 1}. My name is John Brown, I am 32 years old, living in New York No. 1 Lake Park.`,
+      };
+    });
+  columns: STColumn[] = [
+    { title: '编号', index: 'id' },
+    { title: '姓名', index: 'name' },
+    { title: '年龄', index: 'age' },
+    {
+      buttons: [
+        {
+          text: 'Button',
+        },
+      ],
     },
-  };
-  constructor(public msg: NzMessageService) {}
-  submit(value: any) {
-    this.msg.success(JSON.stringify(value));
-  }
+  ];
 }

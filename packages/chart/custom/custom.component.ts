@@ -9,6 +9,8 @@ import {
   Output,
   ViewEncapsulation,
 } from '@angular/core';
+import { LooseObject } from '@antv/g2/lib/interface';
+import { AlainConfigService } from '@delon/theme';
 import { InputNumber } from '@delon/util';
 import { fromEvent, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
@@ -16,9 +18,7 @@ import { debounceTime } from 'rxjs/operators';
 @Component({
   selector: 'g2,g2-custom',
   exportAs: 'g2Custom',
-  template: `
-    <ng-content></ng-content>
-  `,
+  template: ` <ng-content></ng-content> `,
   host: {
     '[style.height.px]': 'height',
   },
@@ -31,15 +31,20 @@ export class G2CustomComponent implements AfterViewInit, OnDestroy {
 
   // #region fields
 
+  @Input() @InputNumber() delay = 0;
   @Input() @InputNumber() height: number;
   @Input() @InputNumber() resizeTime = 0;
+  @Input() theme: string | LooseObject;
   @Output() readonly render = new EventEmitter<ElementRef>();
+  // tslint:disable-next-line:no-output-native
   @Output() readonly resize = new EventEmitter<ElementRef>();
   @Output() readonly destroy = new EventEmitter<ElementRef>();
 
   // #endregion
 
-  constructor(private el: ElementRef) {}
+  constructor(private el: ElementRef, configSrv: AlainConfigService) {
+    configSrv.attachKey(this, 'chart', 'theme');
+  }
 
   private renderChart() {
     this.el.nativeElement.innerHTML = '';
@@ -56,7 +61,7 @@ export class G2CustomComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    this.renderChart();
+    setTimeout(() => this.renderChart(), this.delay);
   }
 
   ngOnDestroy(): void {

@@ -12,9 +12,10 @@ import {
   ViewChild,
   ViewEncapsulation,
 } from '@angular/core';
+import { Chart } from '@antv/g2';
+import { LooseObject } from '@antv/g2/lib/interface';
+import { AlainConfigService } from '@delon/theme';
 import { InputBoolean, InputNumber } from '@delon/util';
-
-declare var G2: any;
 
 export interface G2RadarData {
   name: string;
@@ -37,7 +38,7 @@ export interface G2RadarData {
 })
 export class G2RadarComponent implements OnInit, OnDestroy, OnChanges {
   @ViewChild('container', { static: true }) private node: ElementRef;
-  private chart: any;
+  private chart: Chart;
   legendData: any[] = [];
 
   // #region fields
@@ -45,59 +46,67 @@ export class G2RadarComponent implements OnInit, OnDestroy, OnChanges {
   @Input() @InputNumber() delay = 0;
   @Input() title: string | TemplateRef<void>;
   @Input() @InputNumber() height = 0;
-  @Input() padding: number[] = [44, 30, 16, 30];
+  @Input() padding: number | number[] | 'auto' = [44, 30, 16, 30];
   @Input() @InputBoolean() hasLegend = true;
   @Input() @InputNumber() tickCount = 4;
   @Input() data: G2RadarData[] = [];
   @Input() colors = ['#1890FF', '#FACC14', '#2FC25B', '#8543E0', '#F04864', '#13C2C2', '#fa8c16', '#a0d911'];
+  @Input() theme: string | LooseObject;
 
   // #endregion
 
-  constructor(private cdr: ChangeDetectorRef, private ngZone: NgZone) {}
+  constructor(private cdr: ChangeDetectorRef, private ngZone: NgZone, configSrv: AlainConfigService) {
+    configSrv.attachKey(this, 'chart', 'theme');
+  }
 
   private getHeight() {
     return this.height - (this.hasLegend ? 80 : 22);
   }
 
   private install() {
-    const { node, padding } = this;
+    const { node, padding, theme } = this;
 
-    const chart = (this.chart = new G2.Chart({
+    const chart = (this.chart = new Chart({
       container: node.nativeElement,
-      forceFit: true,
+      autoFit: true,
       height: this.getHeight(),
       padding,
+      theme,
     }));
 
-    chart.coord('polar');
+    chart.coordinate('polar');
     chart.legend(false);
     chart.axis('label', {
       line: null,
-      labelOffset: 8,
-      labels: {
-        label: {
+      label: {
+        offset: 8,
+        style: {
           fill: 'rgba(0, 0, 0, .65)',
         },
       },
       grid: {
         line: {
-          stroke: '#e9e9e9',
-          lineWidth: 1,
-          lineDash: [0, 0],
+          style: {
+            stroke: '#e9e9e9',
+            lineWidth: 1,
+            lineDash: [0, 0],
+          },
         },
       },
     });
     chart.axis('value', {
       grid: {
-        type: 'polygon',
         line: {
-          stroke: '#e9e9e9',
-          lineWidth: 1,
-          lineDash: [0, 0],
+          type: 'polygon',
+          style: {
+            stroke: '#e9e9e9',
+            lineWidth: 1,
+            lineDash: [0, 0],
+          },
         },
       },
-      labels: {
-        label: {
+      label: {
+        style: {
           fill: 'rgba(0, 0, 0, .65)',
         },
       },
@@ -109,11 +118,7 @@ export class G2RadarComponent implements OnInit, OnDestroy, OnChanges {
 
     chart.line().position('label*value');
 
-    chart
-      .point()
-      .position('label*value')
-      .shape('circle')
-      .size(3);
+    chart.point().position('label*value').shape('circle').size(3);
 
     chart.render();
 
@@ -124,21 +129,17 @@ export class G2RadarComponent implements OnInit, OnDestroy, OnChanges {
     const { chart, padding, data, colors, tickCount } = this;
     if (!chart || !data || data.length <= 0) return;
 
-    chart.set('height', this.getHeight());
-    chart.set('padding', padding);
-
-    chart.source(data, {
+    chart.height = this.getHeight();
+    chart.padding = padding;
+    chart.scale({
       value: {
         min: 0,
         tickCount,
       },
     });
 
-    chart.get('geoms').forEach(g => {
-      g.color('name', colors);
-    });
-
-    chart.repaint();
+    chart.geometries.forEach(g => g.color('name', colors));
+    chart.changeData(data);
 
     this.ngZone.run(() => this.genLegend());
   }
@@ -147,20 +148,17 @@ export class G2RadarComponent implements OnInit, OnDestroy, OnChanges {
     const { hasLegend, cdr, chart } = this;
     if (!hasLegend) return;
 
-    this.legendData = chart
-      .get('geoms')[0]
-      .get('dataArray')
-      .map((item: any) => {
-        const origin = item[0]._origin;
-        const result = {
-          name: origin.name,
-          color: item[0].color,
-          checked: true,
-          value: item.reduce((p, n) => p + n._origin.value, 0),
-        };
+    this.legendData = chart.geometries[0].dataArray.map(item => {
+      const origin = item[0]._origin;
+      const result = {
+        name: origin.name,
+        color: item[0].color,
+        checked: true,
+        value: item.reduce((p, n) => p + n._origin.value, 0),
+      };
 
-        return result;
-      });
+      return result;
+    });
 
     cdr.detectChanges();
   }
@@ -168,7 +166,7 @@ export class G2RadarComponent implements OnInit, OnDestroy, OnChanges {
   _click(i: number) {
     const { legendData, chart } = this;
     legendData[i].checked = !legendData[i].checked;
-    chart.repaint();
+    chart.render();
   }
 
   ngOnInit(): void {

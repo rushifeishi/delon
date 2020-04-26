@@ -1,19 +1,15 @@
-import { TestBed, TestBedStatic } from '@angular/core/testing';
-
+import { TestBed } from '@angular/core/testing';
+import { AlainConfig, ALAIN_CONFIG } from '@delon/theme';
+import { LazyService } from '@delon/util';
+import { NzSafeAny } from 'ng-zorro-antd/core/types';
 import { concat } from 'rxjs';
 import { filter, flatMap, tap } from 'rxjs/operators';
-
-import { LazyService } from '@delon/util';
-
-import { LodopConfig } from './lodop.config';
 import { LodopModule } from './lodop.module';
 import { LodopService } from './lodop.service';
 import { Lodop } from './lodop.types';
 
-const cog: LodopConfig = {
-  license: '',
-  licenseA: '',
-  name: 'LODOP',
+const cog: AlainConfig = {
+  lodop: { name: 'LODOP' },
 };
 let mockLodop: any;
 let isErrRequest = false;
@@ -24,24 +20,30 @@ class MockLazyService {
     ++loadCount;
     if (isErrRequest) return Promise.resolve({ status: 'error' });
 
-    window[cog.name!] = isNullLodop ? null : mockLodop;
+    (window as NzSafeAny)[cog.lodop!.name!] = isNullLodop ? null : mockLodop;
     return Promise.resolve({ status: 'ok' });
   }
 }
 
 describe('abc: lodop', () => {
-  let injector: TestBedStatic;
   let srv: LodopService;
 
-  function fnLodopConfig(): LodopConfig {
+  function fnLodopConfig() {
     return cog;
   }
+
   function genModule() {
-    injector = TestBed.configureTestingModule({
+    TestBed.configureTestingModule({
       imports: [LodopModule],
-      providers: [{ provide: LazyService, useClass: MockLazyService }, { provide: LodopConfig, useFactory: fnLodopConfig }],
+      providers: [
+        {
+          provide: ALAIN_CONFIG,
+          useFactory: fnLodopConfig,
+        },
+        { provide: LazyService, useClass: MockLazyService },
+      ],
     });
-    srv = injector.get<LodopService>(LodopService);
+    srv = TestBed.inject<LodopService>(LodopService);
     isErrRequest = false;
     loadCount = 0;
     isNullLodop = false;
@@ -81,7 +83,7 @@ describe('abc: lodop', () => {
         },
       };
       setTimeout(() => {
-        const obj = window[cog.name!] as Lodop;
+        const obj = (window as NzSafeAny)[cog.lodop!.name!] as Lodop;
         (obj.webskt as any).readyState = 1;
       }, 30);
       srv.lodop.subscribe(res => {
@@ -105,7 +107,7 @@ describe('abc: lodop', () => {
       );
     });
     it('#checkMaxCount', (done: () => void) => {
-      cog.checkMaxCount = 2;
+      cog.lodop!.checkMaxCount = 2;
       genModule();
       mockLodop = {
         SET_LICENSES: jasmine.createSpy('SET_LICENSES'),
@@ -198,7 +200,7 @@ describe('abc: lodop', () => {
         SET_LICENSES: jasmine.createSpy('SET_LICENSES'),
         SET_PRINT_STYLEA: jasmine.createSpy('SET_PRINT_STYLEA'),
         // tslint:disable-next-line: only-arrow-functions
-        PRINT_INITA: jasmine.createSpy('PRINT_INITA').and.callFake(function() {
+        PRINT_INITA: jasmine.createSpy('PRINT_INITA').and.callFake(function () {
           mockRes = arguments[4];
         }),
         webskt: {
@@ -224,11 +226,10 @@ describe('abc: lodop', () => {
         `;
     mockLodop = {
       SET_LICENSES: jasmine.createSpy('SET_LICENSES'),
-      PRINT_DESIGN: jasmine.createSpy('PRINT_DESIGN').and.callFake(function() {
-        // tslint:disable-next-line:no-invalid-this
-        setTimeout(() => this.On_Return(0, code), 30);
-        // tslint:disable-next-line:no-invalid-this
-        setTimeout(() => this.On_Return(1, code), 31);
+      PRINT_DESIGN: jasmine.createSpy('PRINT_DESIGN').and.callFake(function () {
+        const that = this;
+        setTimeout(() => that.On_Return(0, code), 30);
+        setTimeout(() => that.On_Return(1, code), 31);
         return 1;
       }),
       webskt: {
@@ -255,15 +256,13 @@ describe('abc: lodop', () => {
       mockLodop = {
         SET_LICENSES: jasmine.createSpy('SET_LICENSES'),
         PRINT_INITA: jasmine.createSpy('PRINT_INITA'),
-        PRINT: jasmine.createSpy('PRINT').and.callFake(function() {
+        PRINT: jasmine.createSpy('PRINT').and.callFake(function () {
+          const that = this;
           if (isPrintError) {
-            // tslint:disable-next-line:no-invalid-this
-            setTimeout(() => this.On_Return(0, '缺纸'), 10);
+            setTimeout(() => that.On_Return(0, '缺纸'), 10);
           } else {
-            // tslint:disable-next-line:no-invalid-this
-            setTimeout(() => this.On_Return(1, true), 10);
-            // tslint:disable-next-line:no-invalid-this
-            setTimeout(() => this.On_Return(0, true), 30);
+            setTimeout(() => that.On_Return(1, true), 10);
+            setTimeout(() => that.On_Return(0, true), 30);
           }
           return 0;
         }),

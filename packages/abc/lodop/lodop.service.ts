@@ -1,15 +1,28 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { of, Observable, Subject } from 'rxjs';
-
+import { AlainConfigService, AlainLodopConfig } from '@delon/theme';
 import { LazyService } from '@delon/util';
-
-import { LodopConfig } from './lodop.config';
+import { NzSafeAny } from 'ng-zorro-antd/core/types';
+import { Observable, of, Subject } from 'rxjs';
 import { Lodop, LodopPrintResult, LodopResult } from './lodop.types';
 
 @Injectable({ providedIn: 'root' })
 export class LodopService implements OnDestroy {
-  constructor(private defCog: LodopConfig, private scriptSrv: LazyService) {
-    this.cog = defCog;
+  private defaultConfig: AlainLodopConfig;
+  private _cog: AlainLodopConfig;
+  private pending = false;
+  private _lodop: Lodop | null = null;
+  private _init = new Subject<LodopResult>();
+  private _events = new Subject<LodopPrintResult>();
+  private printBuffer: any[] = [];
+
+  constructor(private scriptSrv: LazyService, configSrv: AlainConfigService) {
+    this.defaultConfig = configSrv.merge<AlainLodopConfig, 'lodop'>('lodop', {
+      url: '//localhost:8443/CLodopfuncs.js',
+      name: 'CLODOP',
+      companyName: '',
+      checkMaxCount: 100,
+    });
+    this.cog = this.defaultConfig;
   }
 
   /**
@@ -20,13 +33,9 @@ export class LodopService implements OnDestroy {
   get cog() {
     return this._cog;
   }
-  set cog(value: LodopConfig) {
+  set cog(value: AlainLodopConfig) {
     this._cog = {
-      url: 'https://localhost:8443/CLodopfuncs.js',
-      name: 'CLODOP',
-      companyName: '',
-      checkMaxCount: 100,
-      ...this.defCog,
+      ...this.defaultConfig,
       ...value,
     };
   }
@@ -57,13 +66,6 @@ export class LodopService implements OnDestroy {
     return ret;
   }
 
-  private _cog: LodopConfig;
-  private pending = false;
-  private _lodop: Lodop | null = null;
-  private _init = new Subject<LodopResult>();
-  private _events = new Subject<LodopPrintResult>();
-  private printBuffer: any[] = [];
-
   private check() {
     if (!this._lodop) throw new Error(`请务必先调用 lodop 获取对象`);
   }
@@ -73,7 +75,7 @@ export class LodopService implements OnDestroy {
 
     const url = `${this.cog.url}?name=${this.cog.name}`;
     let checkMaxCount = this.cog.checkMaxCount as number;
-    const onResolve = (status, error?: {}) => {
+    const onResolve = (status: NzSafeAny, error?: {}) => {
       this._init.next({
         ok: status === 'ok',
         status,
@@ -94,20 +96,21 @@ export class LodopService implements OnDestroy {
       }
     };
 
-    this.scriptSrv.loadScript(url).then(res => {
+    this.scriptSrv.loadScript(url).then((res: NzSafeAny) => {
       if (res.status !== 'ok') {
         this.pending = false;
         onResolve('script-load-error', res[0]);
         return;
       }
-      if (window.hasOwnProperty(this.cog.name!)) {
-        this._lodop = window[this.cog.name!] as Lodop;
+      const win = window as NzSafeAny;
+      if (win.hasOwnProperty(this.cog.name!)) {
+        this._lodop = win[this.cog.name!] as Lodop;
       }
       if (this._lodop === null) {
         onResolve('load-variable-name-error', { name: this.cog.name });
         return;
       }
-      this._lodop.SET_LICENSES(this.cog.companyName!, this.cog.license, this.cog.licenseA, this.cog.licenseB);
+      this._lodop.SET_LICENSES(this.cog.companyName!, this.cog.license!, this.cog.licenseA, this.cog.licenseB);
       checkStatus();
     });
   }
@@ -128,7 +131,7 @@ export class LodopService implements OnDestroy {
    * @param contextObj 动态参数上下文对象
    * @param parser 自定义解析表达式，默认：`/LODOP\.([^(]+)\(([^\n]+)\);/i`
    */
-  attachCode(code: string, contextObj?: {}, parser?: RegExp): void {
+  attachCode(code: string, contextObj?: NzSafeAny, parser?: RegExp): void {
     this.check();
     if (!parser) parser = /LODOP\.([^(]+)\(([^\n]+)\);/i;
     code.split('\n').forEach(line => {

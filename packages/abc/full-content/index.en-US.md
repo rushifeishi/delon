@@ -6,17 +6,17 @@ cols: 1
 module: FullContentModule
 ---
 
-Often used for tables with scroll bars, a simple [demo](https://ng-alain.github.io/ng-alain/#/delon/simple-table)。
+Often used for tables with scroll bars, a simple [demo](https://ng-alain.surge.sh/#/delon/simple-table)。
 
 ## API
 
 ### full-content
 
-Property         | Description                                           | Type      | Default
------------------|-------------------------------------------------------|-----------|--------
-`[(fullscreen)]` | Whether full screen (not including top, sidebar area) | `boolean` | -
-`[hideTitle]`    | Hide title when `fullscreen` is true                  | `boolean` | `true`
-`[padding]`      | Padding of work area                                  | `number`  | `24`
+| Property | Description | Type | Default |
+|----------|-------------|------|---------|
+| `[(fullscreen)]` | Whether full screen (not including top, sidebar area) | `boolean` | - |
+| `[hideTitle]` | Hide title when `fullscreen` is true | `boolean` | `true` |
+| `[padding]` | Padding of work area | `number` | `24` |
 
 ### [full-toggle]
 

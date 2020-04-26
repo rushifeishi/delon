@@ -10,14 +10,14 @@ type: Widgets
 
 ### schema 属性
 
-参数 | 说明 | 类型 | 默认值
+成员 | 说明 | 类型 | 默认值
 ----|------|-----|------
 `[maxLength]` | 表单最大长度  | `number` | -
 `[readOnly]` | 禁用状态  | `boolean` | -
 
 ### ui 属性
 
-参数 | 说明 | 类型 | 默认值
+成员 | 说明 | 类型 | 默认值
 ----|------|-----|------
 `[type]` | 等同 input 的 `type` 值，例如：`password` | `string` | -
 `[placeholder]` | 在文字框中显示提示讯息 | `string` | -
@@ -31,3 +31,7 @@ type: Widgets
 `[prefixIcon]` | 前缀图标，等同 `nzPrefixIcon` | `string` | -
 `[suffix]` | 带有后缀图标的 input，等同 `nzSuffix` | `string` | -
 `[suffixIcon]` | 后缀图标，等同 `nzSuffixIcon` | `string` | -
+`[change]` | 内容变更事件 | `(val: string) => void` | -
+`[focus]` | 焦点事件 | `(e: FocusEvent) => void` | -
+`[blur]` | 失焦事件 | `(e: FocusEvent) => void` | -
+`[enter]` | 回车事件 | `(e: KeyboardEvent) => void` | -

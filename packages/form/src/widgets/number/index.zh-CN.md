@@ -14,7 +14,7 @@ type: Widgets
 
 ### schema 属性
 
-参数 | 说明 | 类型 | 默认值
+成员 | 说明 | 类型 | 默认值
 ----|------|-----|------
 `[minimum]` | 最小值 | `number` | -
 `[exclusiveMinimum]` | 约束是否包括 `minimum` 值，`true` 表示排除 `minimum` 值 | `boolean` | -
@@ -24,10 +24,11 @@ type: Widgets
 
 ### ui 属性
 
-参数 | 说明 | 类型 | 默认值
+成员 | 说明 | 类型 | 默认值
 ----|------|-----|------
 `[prefix]` | 前缀，简化 `nzFormatter`、`nzParser` 的使用 | - | -
 `[unit]` | 单位，简化 `nzFormatter`、`nzParser` 的使用 | - | -
 `[formatter]` | 等同 `nzFormatter` | - | -
 `[parser]` | 等同 `nzParser` | - | -
 `[precision]` | 等同 `nzPrecision` | - | -
+`[widgetWidth]` | 指定 `nz-number` 宽度 | `number` | `90`

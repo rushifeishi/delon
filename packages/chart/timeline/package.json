@@ -4,7 +4,9 @@
       "flatModuleFile": "timeline",
       "entryFile": "public_api.ts",
       "umdModuleIds": {
-        "@delon/util": "delon.util"
+        "ng-zorro-antd/core/outlet": "ng-zorro-antd/core/outlet",
+        "@delon/util": "delon.util",
+        "@delon/theme": "delon.theme"
       }
     }
   }

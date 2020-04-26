@@ -1,5 +1,5 @@
-import { Component, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
-import { LoadingShowOptions } from './loading.interfaces';
+import { ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/core';
+import { LoadingShowOptions } from './loading.types';
 
 @Component({
   selector: 'loading-default',

@@ -1,12 +1,10 @@
 import { Component, DebugElement, OnInit, ViewChild } from '@angular/core';
-import { inject, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { By } from '@angular/platform-browser';
-
+import { NzSafeAny } from 'ng-zorro-antd/core/types';
 import { NzFormModule } from 'ng-zorro-antd/form';
-
 import { ErrorCollectComponent } from './error-collect.component';
-import { ErrorCollectConfig } from './error-collect.config';
 import { ErrorCollectModule } from './error-collect.module';
 
 describe('abc: error-collect', () => {
@@ -39,14 +37,6 @@ describe('abc: error-collect', () => {
     if (context) context.comp.ngOnDestroy();
   });
 
-  it('General Configuration', inject([ErrorCollectConfig], (cog: ErrorCollectConfig) => {
-    cog.offsetTop = 10;
-    fixture = TestBed.createComponent(TestComponent);
-    context = fixture.componentInstance;
-    expect(context.comp.freq).toBe(500);
-    expect(context.comp.offsetTop).toBe(10);
-  }));
-
   describe('[default]', () => {
     beforeEach(() => getPropertiesAndCreate());
     it('should be collect error', (done: () => void) => {
@@ -59,7 +49,7 @@ describe('abc: error-collect', () => {
     it('should be click go to first error element', (done: () => void) => {
       setTimeout(() => {
         expect(context.comp.count).toBe(1);
-        const el = dl.query(By.css('.has-error')).nativeElement as HTMLElement;
+        const el = dl.query(By.css('.ant-form-item-has-error')).nativeElement as HTMLElement;
         spyOn(el, 'scrollIntoView');
         expect(el.scrollIntoView).not.toHaveBeenCalled();
         (dl.query(By.css('error-collect')).nativeElement as HTMLElement).click();
@@ -75,14 +65,10 @@ describe('abc: error-collect', () => {
       `<form nz-form [formGroup]="validateForm"><error-collect #ec [freq]="freq"></error-collect></form>`,
     );
     getPropertiesAndCreate();
-    let count = 0;
-    spyOnProperty(context.comp, 'offsetTop').and.callFake(() => {
-      ++count;
-      return 0;
-    });
-    expect(count).toBe(0);
+    const safeComp = context.comp as NzSafeAny;
+    spyOn(safeComp, 'findParent');
     (dl.query(By.css('error-collect')).nativeElement as HTMLElement).click();
-    expect(count).toBe(0);
+    expect(safeComp.findParent).not.toHaveBeenCalled();
   });
 
   it('should be throw [No found form element] if no form element', () => {

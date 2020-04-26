@@ -11,9 +11,6 @@ import { DrawerHelper } from './services/drawer/drawer.helper';
 import { ModalHelper } from './services/modal/modal.helper';
 const HELPERS = [ModalHelper, DrawerHelper];
 
-// components
-const COMPONENTS = [];
-
 // pipes
 import { CNCurrencyPipe } from './pipes/currency/cn-currency.pipe';
 import { DatePipe } from './pipes/date/date.pipe';
@@ -31,15 +28,16 @@ const PIPES = [DatePipe, CNCurrencyPipe, KeysPipe, YNPipe, I18nPipe, HTMLPipe, U
 // - zorro: https://github.com/NG-ZORRO/ng-zorro-antd/blob/master/components/icon/nz-icon.service.ts#L6
 
 import { BellOutline, DeleteOutline, InboxOutline, PlusOutline } from '@ant-design/icons-angular/icons';
+import { NzI18nModule } from 'ng-zorro-antd/i18n';
 import { NzIconService } from 'ng-zorro-antd/icon';
 const ICONS = [BellOutline, DeleteOutline, PlusOutline, InboxOutline];
 
 // #endregion
 
 @NgModule({
-  imports: [CommonModule, RouterModule, OverlayModule],
-  declarations: [...COMPONENTS, ...PIPES],
-  exports: [...COMPONENTS, ...PIPES, DelonLocaleModule],
+  imports: [CommonModule, RouterModule, OverlayModule, NzI18nModule],
+  declarations: [...PIPES],
+  exports: [...PIPES, DelonLocaleModule],
 })
 export class AlainThemeModule {
   constructor(iconSrv: NzIconService) {

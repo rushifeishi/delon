@@ -1,9 +1,9 @@
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
-import { NzI18nService } from 'ng-zorro-antd/i18n';
 import format from 'date-fns/format';
+import parse from 'date-fns/parse';
 import { SFValue } from '../../interface';
 import { FormProperty } from '../../model/form.property';
-import { toBool, isDateFns } from '../../utils';
+import { toBool } from '../../utils';
 import { ControlUIWidget } from '../../widget';
 import { SFDateWidgetSchema } from './schema';
 
@@ -22,10 +22,6 @@ export class DateWidget extends ControlUIWidget<SFDateWidgetSchema> implements O
   displayFormat: string;
   i: any;
 
-  private get zorroI18n(): NzI18nService {
-    return this.injector.get<NzI18nService>(NzI18nService);
-  }
-
   ngOnInit(): void {
     const { mode, end, displayFormat, allowClear, showToday } = this.ui;
     this.mode = mode || 'date';
@@ -38,16 +34,15 @@ export class DateWidget extends ControlUIWidget<SFDateWidgetSchema> implements O
       this.endFormat = endUi.format ? endUi._format : this.startFormat;
     }
     if (!displayFormat) {
-      const usingDateFns = isDateFns(this.zorroI18n);
       switch (this.mode) {
         case 'year':
-          this.displayFormat = usingDateFns ? `YYYY` : `yyyy`;
+          this.displayFormat = `yyyy`;
           break;
         case 'month':
-          this.displayFormat = usingDateFns ? `YYYY-MM` : `yyyy-MM`;
+          this.displayFormat = `yyyy-MM`;
           break;
         case 'week':
-          this.displayFormat = usingDateFns ? `YYYY-WW` : `yyyy-ww`;
+          this.displayFormat = `yyyy-ww`;
           break;
       }
     } else {
@@ -61,29 +56,31 @@ export class DateWidget extends ControlUIWidget<SFDateWidgetSchema> implements O
   }
 
   reset(value: SFValue) {
-    value = this.toDate(value);
+    value = this.toDate(value, this.startFormat);
     if (this.flatRange) {
-      this.displayValue = value == null ? [] : [value, this.toDate(this.endProperty.formData)];
+      this.displayValue = value == null ? [] : [value, this.toDate(this.endProperty.formData, this.endFormat || this.startFormat)];
     } else {
       this.displayValue = value;
     }
     this.detectChanges();
+    // TODO: Need to wait for the rendering to complete, otherwise it will be overwritten of end widget
+    setTimeout(() => this._change(this.displayValue));
   }
 
   _change(value: Date | Date[] | null) {
-    if (value == null) {
+    if (value == null || (Array.isArray(value) && value.length < 2)) {
       this.setValue(null);
       this.setEnd(null);
       return;
     }
 
     const res = Array.isArray(value)
-      ? [format(value[0], this.startFormat), format(value[1], this.endFormat)]
+      ? [format(value[0], this.startFormat), format(value[1], this.endFormat || this.startFormat)]
       : format(value, this.startFormat);
 
     if (this.flatRange) {
-      this.setEnd(res[1]);
       this.setValue(res[0]);
+      this.setEnd(res[1]);
     } else {
       this.setValue(res);
     }
@@ -98,19 +95,24 @@ export class DateWidget extends ControlUIWidget<SFDateWidgetSchema> implements O
   }
 
   private get endProperty(): FormProperty {
-    return this.formProperty.parent!.properties![this.ui.end!];
+    return (this.formProperty.parent!.properties as { [key: string]: FormProperty })[this.ui.end!];
   }
 
   private setEnd(value: string | null) {
     if (!this.flatRange) return;
 
     this.endProperty.setValue(value, true);
+    this.endProperty.updateValueAndValidity();
   }
 
-  private toDate(value: SFValue) {
+  private toDate(value: SFValue, formatString: string): Date | null {
+    if (value instanceof Date) {
+      return value;
+    }
     if (typeof value === 'number' || (typeof value === 'string' && !isNaN(+value))) {
       value = new Date(+value);
     }
-    return value;
+    const res = value ? parse(value, formatString, new Date()) : null;
+    return res != null && res.toString() === 'Invalid Date' ? new Date(value) : res;
   }
 }

@@ -10,9 +10,9 @@ import {
   HTTP_INTERCEPTORS,
 } from '@angular/common/http';
 import { Injectable, Injector } from '@angular/core';
-import { of, throwError, Observable } from 'rxjs';
+import { deepCopy } from '@delon/util';
+import { Observable, of, throwError } from 'rxjs';
 import { delay } from 'rxjs/operators';
-
 import { MockRequest } from './interface';
 import { DelonMockConfig } from './mock.config';
 import { MockService } from './mock.service';
@@ -80,13 +80,10 @@ export class MockInterceptor implements HttpInterceptor {
           res = new HttpErrorResponse({
             url: req.url,
             headers: req.headers,
-            status: 400,
+            status: e instanceof MockStatusError ? e.status : 400,
             statusText: e.statusText || 'Unknown Error',
             error: e.error,
           });
-          if (e instanceof MockStatusError) {
-            res.status = e.status;
-          }
         }
         break;
       default:
@@ -102,6 +99,10 @@ export class MockInterceptor implements HttpInterceptor {
       });
     }
 
+    if (config.copy && res.body) {
+      res.body = deepCopy(res.body);
+    }
+
     if (config.log) {
       console.log(`%c👽${req.method}->${req.url}->request`, 'background:#000;color:#bada55', req);
       console.log(`%c👽${req.method}->${req.url}->response`, 'background:#000;color:#bada55', res);
@@ -113,12 +114,9 @@ export class MockInterceptor implements HttpInterceptor {
       const interceptors = this.injector.get(HTTP_INTERCEPTORS, []);
       const lastInterceptors = interceptors.slice(interceptors.indexOf(this) + 1);
       if (lastInterceptors.length > 0) {
-        const chain = lastInterceptors.reduceRight(
-          (_next, _interceptor) => new HttpMockInterceptorHandler(_next, _interceptor),
-          {
-            handle: () => res$,
-          } as HttpBackend,
-        );
+        const chain = lastInterceptors.reduceRight((_next, _interceptor) => new HttpMockInterceptorHandler(_next, _interceptor), {
+          handle: () => res$,
+        } as HttpBackend);
         return chain.handle(req).pipe(delay(config.delay));
       }
     }

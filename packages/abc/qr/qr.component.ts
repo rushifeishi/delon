@@ -8,17 +8,15 @@ import {
   Output,
   ViewEncapsulation,
 } from '@angular/core';
+import { AlainConfigService, AlainQRConfig } from '@delon/theme';
 import { InputNumber } from '@delon/util';
-
-import { QRConfig } from './qr.config';
+import { QR_DEFULAT_CONFIG } from './qr.config';
 import { QRService } from './qr.service';
 
 @Component({
   selector: 'qr',
   exportAs: 'qr',
-  template: `
-    <img class="qr__img" src="{{ dataURL }}" />
-  `,
+  template: ` <img class="qr__img" src="{{ dataURL }}" /> `,
   host: {
     '[class.qr]': 'true',
     '[style.height.px]': 'size',
@@ -42,12 +40,13 @@ export class QRComponent implements OnChanges {
   @Input() @InputNumber() padding: number;
   @Input() @InputNumber() size: number;
   @Input() value: string;
+  // tslint:disable-next-line:no-output-native
   @Output() readonly change = new EventEmitter<string>();
 
   // #endregion
 
-  constructor(cog: QRConfig, private srv: QRService, private cdr: ChangeDetectorRef) {
-    Object.assign(this, { ...new QRConfig(), ...cog });
+  constructor(private srv: QRService, private cdr: ChangeDetectorRef, configSrv: AlainConfigService) {
+    configSrv.attach<AlainQRConfig, 'qr'>(this, 'qr', QR_DEFULAT_CONFIG);
   }
 
   ngOnChanges(): void {

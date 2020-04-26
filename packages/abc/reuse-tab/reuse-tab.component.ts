@@ -23,7 +23,6 @@ import { AlainI18NService, ALAIN_I18N_TOKEN } from '@delon/theme';
 import { InputBoolean, InputNumber } from '@delon/util';
 import { Subject } from 'rxjs';
 import { debounceTime, filter, takeUntil } from 'rxjs/operators';
-
 import { ReuseTabContextService } from './reuse-tab-context.service';
 import {
   ReuseContextCloseEvent,
@@ -79,7 +78,9 @@ export class ReuseTabComponent implements OnInit, OnChanges, OnDestroy {
   @Input() tabBarGutter: number;
   @Input() tabBarStyle: { [key: string]: string };
   @Input() tabType: 'line' | 'card' = 'line';
+  // tslint:disable-next-line:no-output-native
   @Output() readonly change = new EventEmitter<ReuseItem>();
+  // tslint:disable-next-line:no-output-native
   @Output() readonly close = new EventEmitter<ReuseItem | null>();
 
   // #endregion

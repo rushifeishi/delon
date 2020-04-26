@@ -6,14 +6,13 @@ N="
 "
 PWD=`pwd`
 readonly thisDir=$(cd $(dirname $0); pwd)
-source ${thisDir}/_travis-fold.sh
 
 cd $(dirname $0)/../..
 
 BUILD=false
 TEST=false
 DEBUG=false
-TRAVIS=false
+CLONE=false
 COPY=false
 INTEGRATION=false
 for ARG in "$@"; do
@@ -24,8 +23,8 @@ for ARG in "$@"; do
     -b)
       BUILD=true
       ;;
-    -travis)
-      TRAVIS=true
+    -clone)
+      CLONE=true
       ;;
     -copy)
       COPY=true
@@ -50,7 +49,6 @@ DEPENDENCIES=$(node -p "
   [
     'screenfull',
     'ajv',
-    'less-bundle-promise',
     '@ngx-translate/core',
     '@ngx-translate/http-loader',
     'tslint-config-prettier',
@@ -67,7 +65,6 @@ DEPENDENCIES=$(node -p "
     'prettier',
     '@antv/data-set',
     '@antv/g2',
-    '@antv/g2-plugin-slider',
     '@angularclass/hmr',
     'ng-alain-codelyzer',
     'ng-alain-sts',
@@ -94,7 +91,7 @@ updateVersionReferences() {
     for dependencie in ${DEPENDENCIES[@]}
     do
       IFS=$'|' read -r lib version <<< "$dependencie"
-      echo ">>>> update ${lib}: ${version}"
+      # echo ">>>> update ${lib}: ${version}"
       perl -p -i -e "s/${lib}\@DEP\-0\.0\.0\-PLACEHOLDER/${lib}\@${version}/g" $(grep -ril ${lib}\@DEP\-0\.0\.0\-PLACEHOLDER .) < /dev/null 2> /dev/null
     done
 
@@ -118,6 +115,8 @@ copyFiles() {
     "${1}.prettierignore|${2}application/files/root/__dot__prettierignore"
     "${1}.prettierrc|${2}application/files/root/__dot__prettierrc"
     "${1}.stylelintrc|${2}application/files/root/__dot__stylelintrc"
+    "${1}.lintstagedrc.js|${2}application/files/root"
+    "${1}.nvmrc|${2}application/files/root"
     "${1}tslint.json|${2}application/files/root"
     "${1}proxy.conf.json|${2}application/files/root"
     # cli
@@ -151,9 +150,10 @@ copyFiles() {
     "${1}src/app/core/README.md|${2}application/files/src/app/core/"
     # shared
     "${1}src/app/shared/utils/*|${2}application/files/src/app/shared/utils/"
+    "${1}src/app/shared/st-widget/*|${2}application/files/src/app/shared/st-widget/"
     "${1}src/app/shared/index.ts|${2}application/files/src/app/shared/"
     # app.component
-    "${1}src/app/delon.module.ts|${2}application/files/src/app/"
+    "${1}src/app/global-config.module.ts|${2}application/files/src/app/"
     "${1}src/app/app.component.ts|${2}application/files/src/app/"
     # layout
     "${1}src/app/layout/fullscreen|${2}application/files/src/app/layout/"
@@ -213,7 +213,7 @@ buildCLI() {
   rm ${DIST}/test.ts ${DIST}/tsconfig.json ${DIST}/tsconfig.spec.json
 
   if [[ ${COPY} == true ]]; then
-    if [[ ${TRAVIS} == true ]]; then
+    if [[ ${CLONE} == true ]]; then
       cloneScaffold
       echo "== copy delon/ng-alain files via travis mode"
       copyFiles 'ng-alain/' ${DIST}/
@@ -235,18 +235,24 @@ buildCLI() {
 integrationCli() {
   echo ">>> Current dir: ${PWD}"
   # Unable to use `ng new` if the root directory contains `angular.json`
+  rm -rf ${PWD}/node_modules
+  rm ${PWD}/package.json
+  rm ${PWD}/tsconfig.json
   rm ${PWD}/angular.json
   INTEGRATION_SOURCE=${PWD}/integration
   mkdir -p ${INTEGRATION_SOURCE}
   cd ${INTEGRATION_SOURCE}
-  echo ">>> Generate a new angular project, Current dir: ${PWD}"
+  echo ">>> Generate a new angular project, Current dir: ${PWD}, using anguar version:"
+  ng version
   ng new integration --style=less --routing=true
   INTEGRATION_SOURCE=${PWD}/integration
   cd ${INTEGRATION_SOURCE}
   echo ">>> Copy ng-alain, Current dir: ${PWD}"
   rsync -a ${DIST} ${INTEGRATION_SOURCE}/node_modules/ng-alain
   echo ">>> Running ng g ng-alain:ng-add"
-  ng g ng-alain:ng-add --defaultLanguage=en --hmr=true --codeStyle=true --form=true --mock=true --i18n=true --g2=true
+  ng g ng-alain:ng-add --defaultLanguage=en --hmr=true --codeStyle=true --form=true --mock=true --i18n=true
+  echo ">>> Install dependencies"
+  npm i
   echo ">>> Copy again ng-alain"
   rsync -a ${DIST} ${INTEGRATION_SOURCE}/node_modules/ng-alain
   echo ">>> Copy @delon/*"
@@ -256,42 +262,30 @@ integrationCli() {
   echo ">>> Running npm run icon"
   npm run icon
   echo ">>> Running build"
-  node --max_old_space_size=5120 ./node_modules/@angular/cli/bin/ng build --prod
+  npm run build
   cd ../../
   echo ">>> Current dir: ${PWD}"
 }
 
 if [[ ${BUILD} == true ]]; then
-  travisFoldStart "BUILD"
-
-    tsconfigFile=${SOURCE}/tsconfig.json
-    DIST=${PWD}/dist/ng-alain/
-    buildCLI
-
-  travisFoldEnd "BUILD"
+  tsconfigFile=${SOURCE}/tsconfig.json
+  DIST=${PWD}/dist/ng-alain/
+  buildCLI
 fi
 
 if [[ ${TEST} == true ]]; then
-  travisFoldStart "TEST"
-
-    tsconfigFile=${SOURCE}/tsconfig.spec.json
-    DIST=${PWD}/dist/schematics-test/
-    buildCLI
-    $JASMINE "${DIST}/**/*.spec.js"
-
-  travisFoldEnd "TEST"
+  tsconfigFile=${SOURCE}/tsconfig.spec.json
+  DIST=${PWD}/dist/schematics-test/
+  buildCLI
+  $JASMINE "${DIST}/**/*.spec.js"
 fi
 
 if [[ ${INTEGRATION} == true ]]; then
-  travisFoldStart "INTEGRATION"
-
-    tsconfigFile=${SOURCE}/tsconfig.json
-    DIST=${PWD}/dist/ng-alain/
-    COPY=true
-    buildCLI
-    integrationCli
-
-  travisFoldEnd "INTEGRATION"
+  tsconfigFile=${SOURCE}/tsconfig.json
+  DIST=${PWD}/dist/ng-alain/
+  COPY=true
+  buildCLI
+  integrationCli
 fi
 
 echo "Finished!!"
@@ -303,10 +297,11 @@ echo "Finished!!"
 if [[ ${DEBUG} == true ]]; then
   cd ../../
   DEBUG_FROM=${PWD}/work/delon/dist/ng-alain/*
-  DEBUG_TO=${PWD}/work/ng8/node_modules/ng-alain/
+  DEBUG_TO=${PWD}/work/ng9/node_modules/ng-alain/
   echo "DEBUG_FROM:${DEBUG_FROM}"
   echo "DEBUG_TO:${DEBUG_TO}"
   rm -rf ${DEBUG_TO}/application
+  mkdir -p ${DEBUG_TO}
   rsync -a ${DEBUG_FROM} ${DEBUG_TO}
   echo "DEBUG FINISHED~!"
 fi

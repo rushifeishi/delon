@@ -1,9 +1,7 @@
 import { Inject, Injectable, OnDestroy, Optional } from '@angular/core';
+import { ACLService } from '@delon/acl';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { share } from 'rxjs/operators';
-
-import { ACLService } from '@delon/acl';
-
 import { AlainI18NService, ALAIN_I18N_TOKEN } from '../i18n/i18n';
 import { Menu, MenuIcon } from './interface';
 
@@ -86,10 +84,7 @@ export class MenuService implements OnDestroy {
         // compatible `anticon anticon-user`
         if (~item.icon.indexOf(`anticon-`)) {
           type = 'icon';
-          value = value
-            .split('-')
-            .slice(1)
-            .join('-');
+          value = value.split('-').slice(1).join('-');
         } else if (/^https?:\/\//.test(item.icon)) {
           type = 'img';
         }
@@ -194,10 +189,11 @@ export class MenuService implements OnDestroy {
 
       if (!recursive) break;
 
-      url = url
-        .split('/')
-        .slice(0, -1)
-        .join('/');
+      if (url.includes('?')) {
+        url = url.split('?')[0];
+      } else {
+        url = url.split('/').slice(0, -1).join('/');
+      }
     }
 
     return item;
@@ -248,7 +244,7 @@ export class MenuService implements OnDestroy {
    */
   getItem(key: string): Menu | null {
     let res: Menu | null = null;
-    this.visit(this.data, (item) => {
+    this.visit(this.data, item => {
       if (res == null && item.key === key) {
         res = item;
       }

@@ -9,8 +9,12 @@
   },
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
-    "source.fixAll": true,
-    "source.fixAll.tslint": true
+    // For ESLint
+    "source.fixAll.eslint": true,
+    // For TSLint
+    "source.fixAll.tslint": true,
+    // For Stylelint
+    "source.fixAll.stylelint": true,
   },
   "[markdown]": {
     "editor.formatOnSave": false
@@ -22,6 +26,9 @@
     "editor.formatOnSave": false
   },
   "[jsonc]": {
+    "editor.formatOnSave": false
+  },
+  "[html]": {
     "editor.formatOnSave": false
   },
   "files.associations": {

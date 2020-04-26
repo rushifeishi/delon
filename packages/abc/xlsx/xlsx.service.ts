@@ -1,25 +1,31 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { AlainConfigService, AlainXlsxConfig } from '@delon/theme';
 import { LazyResult, LazyService } from '@delon/util';
 import { saveAs } from 'file-saver';
-
-import { XlsxConfig } from './xlsx.config';
+import { NzSafeAny } from 'ng-zorro-antd/core/types';
 import { XlsxExportOptions, XlsxExportSheet } from './xlsx.types';
 
 declare var XLSX: any;
 
 @Injectable({ providedIn: 'root' })
 export class XlsxService {
-  constructor(private cog: XlsxConfig, private http: HttpClient, private lazy: LazyService) {}
+  private cog: AlainXlsxConfig;
+  constructor(private http: HttpClient, private lazy: LazyService, configSrv: AlainConfigService) {
+    this.cog = configSrv.merge<AlainXlsxConfig, 'xlsx'>('xlsx', {
+      url: '//cdn.bootcss.com/xlsx/0.15.6/xlsx.full.min.js',
+      modules: [],
+    });
+  }
 
   private init(): Promise<LazyResult[]> {
     return typeof XLSX !== 'undefined' ? Promise.resolve([]) : this.lazy.load([this.cog.url!].concat(this.cog.modules!));
   }
 
-  private read(wb: any): { [key: string]: any[][] } {
-    const ret: any = {};
-    wb.SheetNames.forEach(name => {
-      const sheet: any = wb.Sheets[name];
+  private read(wb: NzSafeAny): { [key: string]: NzSafeAny[][] } {
+    const ret: NzSafeAny = {};
+    wb.SheetNames.forEach((name: string) => {
+      const sheet: NzSafeAny = wb.Sheets[name];
       ret[name] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
     });
     return ret;

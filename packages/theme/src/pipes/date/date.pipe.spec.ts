@@ -1,14 +1,12 @@
+import { registerLocaleData } from '@angular/common';
+import localeZhHans from '@angular/common/locales/zh-Hans';
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-
-import { registerLocaleData } from '@angular/common';
-import localeZhHans from '@angular/common/locales/zh-Hans';
+import { NzI18nService, NZ_DATE_LOCALE } from 'ng-zorro-antd/i18n';
 registerLocaleData(localeZhHans);
-
-import { distanceInWordsToNow } from 'date-fns';
-import * as zh_cn from 'date-fns/locale/zh_cn';
-
+import formatDistanceToNow from 'date-fns/formatDistanceToNow';
+import { zhCN as dateFnsLang } from 'date-fns/locale';
 import { AlainThemeModule } from '../../theme.module';
 
 describe('Pipe: _date', () => {
@@ -19,30 +17,30 @@ describe('Pipe: _date', () => {
     TestBed.configureTestingModule({
       imports: [AlainThemeModule.forRoot()],
       declarations: [TestComponent],
+      providers: [{ provide: NZ_DATE_LOCALE, useValue: dateFnsLang }],
     });
     fixture = TestBed.createComponent(TestComponent);
-    (window as any).__locale__ = zh_cn;
   });
 
   [
     { date, result: `2017-10-17 15:35` },
     { date: +date, result: `2017-10-17 15:35` },
     { date: (+date).toString(), result: `2017-10-17 15:35` },
-    { date, result: `2017年10月17日`, format: 'YYYY年MM月DD日' },
+    { date, result: `2017年10月17日`, format: 'yyyy年MM月dd日' },
     { date: null, result: `` },
     { date: undefined, result: `` },
     { date, result: ``, format: 'fn' },
   ].forEach((item: any) => {
-    it(`${typeof item.date}:${'' + item.date} muse be ${item.result}${
-      item.format ? `(format: ${item.format})` : ''
-    }`, () => {
+    it(`${typeof item.date}:${'' + item.date} muse be ${item.result}${item.format ? `(format: ${item.format})` : ''}`, () => {
       fixture.componentInstance.value = item.date;
       if (item.format) {
         fixture.componentInstance.format = item.format;
-        if (item.format === 'fn')
-          item.result = distanceInWordsToNow(item.date, {
-            locale: (window as any).__locale__,
+        if (item.format === 'fn') {
+          const nzI18n = TestBed.inject(NzI18nService);
+          item.result = formatDistanceToNow(item.date, {
+            locale: nzI18n.getDateLocale(),
           });
+        }
       }
       fixture.detectChanges();
       expect((fixture.debugElement.query(By.css('#result')).nativeElement as HTMLElement).innerText).toBe(item.result);
@@ -51,9 +49,7 @@ describe('Pipe: _date', () => {
 });
 
 @Component({
-  template: `
-    <p id="result">{{ value | _date: format }}</p>
-  `,
+  template: ` <p id="result">{{ value | _date: format }}</p> `,
 })
 class TestComponent {
   value: Date | string | number;

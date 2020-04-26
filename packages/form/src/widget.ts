@@ -1,13 +1,14 @@
 import { AfterViewInit, ChangeDetectorRef, HostBinding, Inject, Injector } from '@angular/core';
-import { takeUntil } from 'rxjs/operators';
+import { DomSanitizer } from '@angular/platform-browser';
 import { LocaleData } from '@delon/theme';
+import { takeUntil } from 'rxjs/operators';
 import { ErrorData } from './errors';
 import { SFValue } from './interface';
 import { ArrayProperty } from './model/array.property';
 import { FormProperty } from './model/form.property';
 import { ObjectProperty } from './model/object.property';
 import { SFSchema } from './schema';
-import { SFUISchemaItem, SFOptionalHelp } from './schema/ui';
+import { SFOptionalHelp, SFUISchemaItem } from './schema/ui';
 import { SFItemComponent } from './sf-item.component';
 import { SFComponent } from './sf.component';
 import { di } from './utils';
@@ -43,11 +44,15 @@ export abstract class Widget<T extends FormProperty, UIT extends SFUISchemaItem>
     return this.ui.optionalHelp as SFOptionalHelp;
   }
 
+  get dom(): DomSanitizer {
+    return this.injector.get(DomSanitizer);
+  }
+
   constructor(
-    @Inject(ChangeDetectorRef) public readonly cd: ChangeDetectorRef,
-    @Inject(Injector) public readonly injector: Injector,
-    @Inject(SFItemComponent) public readonly sfItemComp?: SFItemComponent,
-    @Inject(SFComponent) public readonly sfComp?: SFComponent,
+    @Inject(ChangeDetectorRef) protected readonly cd: ChangeDetectorRef,
+    @Inject(Injector) protected readonly injector: Injector,
+    @Inject(SFItemComponent) protected readonly sfItemComp?: SFItemComponent,
+    @Inject(SFComponent) protected readonly sfComp?: SFComponent,
   ) {}
 
   ngAfterViewInit(): void {

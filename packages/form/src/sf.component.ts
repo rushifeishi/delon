@@ -3,6 +3,7 @@ import {
   ChangeDetectorRef,
   Component,
   EventEmitter,
+  Inject,
   Input,
   OnChanges,
   OnDestroy,
@@ -13,12 +14,13 @@ import {
   SimpleChanges,
   TemplateRef,
   ViewEncapsulation,
-  Inject,
 } from '@angular/core';
+import { DomSanitizer } from '@angular/platform-browser';
 import { ACLService } from '@delon/acl';
-import { DelonLocaleService, LocaleData, ALAIN_I18N_TOKEN, AlainI18NService } from '@delon/theme';
+import { AlainI18NService, ALAIN_I18N_TOKEN, DelonLocaleService, LocaleData } from '@delon/theme';
 import { deepCopy, InputBoolean } from '@delon/util';
-import { Subject, Observable, merge } from 'rxjs';
+import { NzSafeAny } from 'ng-zorro-antd/core/types';
+import { merge, Observable, Subject } from 'rxjs';
 import { filter, takeUntil } from 'rxjs/operators';
 import { DelonFormConfig } from './config';
 import { ErrorData } from './errors';
@@ -26,9 +28,9 @@ import { SFButton, SFLayout } from './interface';
 import { FormProperty, PropertyGroup } from './model/form.property';
 import { FormPropertyFactory } from './model/form.property.factory';
 import { SFSchema } from './schema/index';
-import { SFUISchema, SFUISchemaItem, SFUISchemaItemRun, SFOptionalHelp } from './schema/ui';
+import { SFOptionalHelp, SFUISchema, SFUISchemaItem, SFUISchemaItemRun } from './schema/ui';
 import { TerminatorService } from './terminator.service';
-import { di, resolveIf, retrieveSchema, FORMATMAPS } from './utils';
+import { di, FORMATMAPS, resolveIf, retrieveSchema } from './utils';
 import { SchemaValidatorFactory } from './validator.factory';
 import { WidgetFactory } from './widget.factory';
 
@@ -201,6 +203,7 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
     private formPropertyFactory: FormPropertyFactory,
     private terminator: TerminatorService,
     private options: DelonFormConfig,
+    private dom: DomSanitizer,
     private cdr: ChangeDetectorRef,
     private localeSrv: DelonLocaleService,
     @Optional() private aclSrv: ACLService,
@@ -258,7 +261,7 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
         const property = retrieveSchema(schema.properties![key] as SFSchema, definitions);
         const ui = {
           widget: property.type,
-          ...(property.format && FORMATMAPS[property.format]),
+          ...(property.format && (FORMATMAPS as NzSafeAny)[property.format]),
           ...(typeof property.ui === 'string' ? { widget: property.ui } : null),
           ...(!property.format && !property.ui && Array.isArray(property.enum) && property.enum.length > 0 ? { widget: 'select' } : null),
           ...this._defUi,
@@ -287,6 +290,7 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
           if (dateEndProperty) {
             dateEndProperty.ui = {
               ...(dateEndProperty.ui as SFUISchemaItem),
+              widget: ui.widget,
               hidden: true,
             };
           } else {
@@ -321,6 +325,9 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
         }
         if (ui.descriptionI18n) {
           property.description = this.fanyi(ui.descriptionI18n);
+        }
+        if (property.description) {
+          property._description = this.dom.bypassSecurityTrustHtml(property.description);
         }
         ui.hidden = typeof ui.hidden === 'boolean' ? ui.hidden : false;
         if (ui.hidden === false && ui.acl && this.aclSrv && !this.aclSrv.can(ui.acl)) {
@@ -416,7 +423,7 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
         this._btn.render!.spanLabelFixed = btnUi.spanLabelFixed;
       }
       // 固定标签宽度时，若不指定样式，则默认居中
-      if (!this._btn.render!.class && (typeof btnUi.spanLabelFixed === 'number' && btnUi.spanLabelFixed > 0)) {
+      if (!this._btn.render!.class && typeof btnUi.spanLabelFixed === 'number' && btnUi.spanLabelFixed > 0) {
         this._btn.render!.class = 'text-center';
       }
     } else {
@@ -469,7 +476,7 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
       if (Array.isArray(property.properties)) {
         property.properties.forEach(p => fn(p));
       } else {
-        Object.keys(property.properties).forEach(key => fn(property.properties![key]));
+        Object.keys(property.properties).forEach(key => fn((property.properties as { [key: string]: FormProperty })[key]));
       }
     };
     if (options.onlyRoot) {
