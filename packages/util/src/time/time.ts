@@ -12,6 +12,7 @@ import startOfYear from 'date-fns/startOfYear';
 import subMonths from 'date-fns/subMonths';
 import subWeeks from 'date-fns/subWeeks';
 import subYears from 'date-fns/subYears';
+import { NzSafeAny } from 'ng-zorro-antd/core/types';
 
 /**
  * 获取时间范围
@@ -22,7 +23,7 @@ export function getTimeDistance(
   type: 'today' | '-today' | 'yesterday' | 'week' | '-week' | 'month' | '-month' | 'year' | '-year' | number,
   time?: Date | string | number,
 ): [Date, Date] {
-  time = time ? (typeof time === 'string' ? parseISO(time) : new Date(time)) : new Date();
+  time = time ? (typeof time === 'string' ? parse(time, 'yyyy-MM-dd HH:mm:ss', new Date()) : new Date(time)) : new Date();
   const options: { weekStartsOn: 1 } = { weekStartsOn: 1 };
 
   let res: [Date, Date];
@@ -68,8 +69,25 @@ export function fixEndTimeOfRange(dates: [Date, Date]): [Date, Date] {
   return [startOfDay(dates[0]), endOfDay(dates[1])];
 }
 
-export function toDate(val: Date | string | number, formatString = 'yyyy-MM-dd HH:mm:ss'): Date {
-  if (val instanceof Date) return val;
-  if (typeof val === 'number') return new Date(val);
-  return parse(val, formatString, new Date());
+export type ToDateOptions = string | { formatString?: string; defaultValue?: NzSafeAny };
+
+/**
+ * Return the date parsed from string using the given format string
+ * - If the argument is a number, it is treated as a timestamp.
+ * @param formatString If parsing fails try to parse the date by pressing `formatString`
+ * @param defaultValue If parsing fails returned default value, default: `new Date(NaN)`
+ */
+export function toDate(value: Date | string | number, options?: ToDateOptions): Date {
+  if (typeof options === 'string') options = { formatString: options };
+  const { formatString, defaultValue } = { formatString: 'yyyy-MM-dd HH:mm:ss', defaultValue: new Date(NaN), ...options };
+  if (value == null) return defaultValue;
+  if (value instanceof Date) return value;
+  if (typeof value === 'number') return new Date(value);
+
+  let tryDate = !isNaN(+value) ? new Date(+value) : parseISO(value);
+  if (isNaN(tryDate as NzSafeAny)) {
+    tryDate = parse(value, formatString!, defaultValue);
+  }
+
+  return isNaN(tryDate as NzSafeAny) ? defaultValue : tryDate;
 }

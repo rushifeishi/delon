@@ -21,9 +21,7 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import {
-  AlainConfigService,
   AlainI18NService,
-  AlainSTConfig,
   ALAIN_I18N_TOKEN,
   CNCurrencyPipe,
   DatePipe,
@@ -33,9 +31,9 @@ import {
   ModalHelper,
   YNPipe,
 } from '@delon/theme';
-import { deepMergeKey, InputBoolean, InputNumber, toBoolean } from '@delon/util';
+import { AlainConfigService, AlainSTConfig, deepMergeKey, InputBoolean, InputNumber, toBoolean } from '@delon/util';
 import { NzSafeAny } from 'ng-zorro-antd/core/types';
-import { NzTableComponent, NzTableData, NzTableStyleService } from 'ng-zorro-antd/table';
+import { NzTableComponent, NzTableData } from 'ng-zorro-antd/table';
 import { from, Observable, of, Subject, Subscription } from 'rxjs';
 import { filter, takeUntil } from 'rxjs/operators';
 import { STColumnSource } from './st-column-source';
@@ -69,7 +67,7 @@ import {
   selector: 'st',
   exportAs: 'st',
   templateUrl: './st.component.html',
-  providers: [NzTableStyleService, STDataSource, STRowSource, STColumnSource, STExport, CNCurrencyPipe, DatePipe, YNPipe, DecimalPipe],
+  providers: [STDataSource, STRowSource, STColumnSource, STExport, CNCurrencyPipe, DatePipe, YNPipe, DecimalPipe],
   host: {
     '[class.st]': `true`,
     '[class.st__p-left]': `page.placement === 'left'`,
@@ -336,7 +334,10 @@ export class STComponent implements AfterViewInit, OnChanges, OnDestroy {
         .pipe(takeUntil(this.unsubscribe$))
         .subscribe(
           result => resolvePromise(result),
-          error => rejectPromise(error),
+          error => {
+            console.warn(error);
+            rejectPromise(error);
+          },
         );
     });
   }
