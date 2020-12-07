@@ -2,8 +2,8 @@
 title: g2-card
 subtitle: 图表卡片
 cols: 2
-module: G2CardModule
 type: Components
+module: import { G2CardModule } from '@delon/chart/card';
 ---
 
 图表卡片，用于展示图表的卡片容器，可以方便的配合其它图表套件展示丰富信息。
@@ -12,8 +12,8 @@ type: Components
 
 ### g2-card
 
-| 参数      | 说明                                      | 类型         | 默认值 |
-|----------|------------------------------------------|-------------|-------|
+| 参数 | 说明 | 类型 | 默认值 |
+|----|----|----|-----|
 | `[title]` | 卡片标题 | `string,TemplateRef<void>` | - |
 | `[avatar]` | 头像 | `string,TemplateRef<void>` | - |
 | `[action]` | 卡片操作 | `string,TemplateRef<void>` | - |

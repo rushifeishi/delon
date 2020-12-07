@@ -9,7 +9,7 @@ import {
   QueryList,
   ViewEncapsulation,
 } from '@angular/core';
-import { InputNumber } from '@delon/util';
+import { InputNumber, NumberInput } from '@delon/util';
 import { AvatarListItemComponent } from './avatar-list-item.component';
 
 @Component({
@@ -22,6 +22,8 @@ import { AvatarListItemComponent } from './avatar-list-item.component';
   encapsulation: ViewEncapsulation.None,
 })
 export class AvatarListComponent implements AfterViewInit, OnChanges {
+  static ngAcceptInputType_maxLength: NumberInput;
+
   private inited = false;
   @ContentChildren(AvatarListItemComponent, { descendants: false })
   private _items!: QueryList<AvatarListItemComponent>;
@@ -50,7 +52,7 @@ export class AvatarListComponent implements AfterViewInit, OnChanges {
 
   constructor(private cdr: ChangeDetectorRef) {}
 
-  private gen() {
+  private gen(): void {
     const { _items } = this;
     const maxLength = this.maxLength > 0 ? this.maxLength : _items.length;
     const numOfChildren = _items.length;
@@ -60,12 +62,12 @@ export class AvatarListComponent implements AfterViewInit, OnChanges {
     this.cdr.detectChanges();
   }
 
-  ngAfterViewInit() {
+  ngAfterViewInit(): void {
     this.gen();
     this.inited = true;
   }
 
-  ngOnChanges() {
+  ngOnChanges(): void {
     if (this.inited) {
       this.gen();
     }

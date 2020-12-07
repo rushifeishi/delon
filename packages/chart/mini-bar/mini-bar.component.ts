@@ -1,23 +1,30 @@
+import { Platform } from '@angular/cdk/platform';
 import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
+  EventEmitter,
   Input,
   NgZone,
   OnChanges,
   OnDestroy,
   OnInit,
+  Output,
   ViewEncapsulation,
 } from '@angular/core';
-import { Chart } from '@antv/g2';
-import { LooseObject, TooltipOption } from '@antv/g2/lib/interface';
-import { AlainConfigService, InputNumber } from '@delon/util';
+import { Chart, Event, Types } from '@antv/g2';
+import { AlainConfigService, InputNumber, NumberInput } from '@delon/util';
 import { NzSafeAny } from 'ng-zorro-antd/core/types';
 
 export interface G2MiniBarData {
   x: any;
   y: any;
   [key: string]: any;
+}
+
+export interface G2MiniBarClickItem {
+  item: G2MiniBarData;
+  ev: Event;
 }
 
 @Component({
@@ -32,7 +39,15 @@ export interface G2MiniBarData {
   encapsulation: ViewEncapsulation.None,
 })
 export class G2MiniBarComponent implements OnInit, OnChanges, OnDestroy {
-  private chart: Chart;
+  static ngAcceptInputType_delay: NumberInput;
+  static ngAcceptInputType_height: NumberInput;
+  static ngAcceptInputType_borderWidth: NumberInput;
+
+  private _chart: Chart;
+
+  get chart(): Chart {
+    return this._chart;
+  }
 
   // #region fields
 
@@ -44,17 +59,18 @@ export class G2MiniBarComponent implements OnInit, OnChanges, OnDestroy {
   @Input() data: G2MiniBarData[] = [];
   @Input() yTooltipSuffix = '';
   @Input() tooltipType: 'mini' | 'default' = 'default';
-  @Input() theme: string | LooseObject;
+  @Input() theme: string | Types.LooseObject;
+  @Output() clickItem = new EventEmitter<G2MiniBarClickItem>();
 
   // #endregion
 
-  constructor(private el: ElementRef, private ngZone: NgZone, configSrv: AlainConfigService) {
+  constructor(private el: ElementRef, private ngZone: NgZone, configSrv: AlainConfigService, private platform: Platform) {
     configSrv.attachKey(this, 'chart', 'theme');
   }
 
-  private install() {
+  private install(): void {
     const { el, height, padding, yTooltipSuffix, tooltipType, theme } = this;
-    const chart = (this.chart = new Chart({
+    const chart = (this._chart = new Chart({
       container: el.nativeElement,
       autoFit: true,
       height,
@@ -71,7 +87,7 @@ export class G2MiniBarComponent implements OnInit, OnChanges, OnDestroy {
     });
     chart.legend(false);
     chart.axis(false);
-    const tooltipOption: TooltipOption = {
+    const tooltipOption: Types.TooltipOption = {
       showTitle: false,
       showMarkers: true,
       showCrosshairs: false,
@@ -94,21 +110,29 @@ export class G2MiniBarComponent implements OnInit, OnChanges, OnDestroy {
       .position('x*y')
       .tooltip('x*y', (x: NzSafeAny, y: NzSafeAny) => ({ name: x, value: y + yTooltipSuffix }));
 
+    chart.on(`interval:click`, (ev: Event) => {
+      this.ngZone.run(() => this.clickItem.emit({ item: ev.data?.data, ev }));
+    });
+
     chart.render();
 
     this.attachChart();
   }
 
-  private attachChart() {
-    const { chart, height, padding, data, color, borderWidth } = this;
-    if (!chart || !data || data.length <= 0) return;
-    chart.geometries[0].size(borderWidth).color(color);
-    chart.height = height;
-    chart.padding = padding;
-    chart.changeData(data);
+  private attachChart(): void {
+    const { _chart, height, padding, data, color, borderWidth } = this;
+    if (!_chart || !data || data.length <= 0) return;
+    _chart.geometries[0].size(borderWidth).color(color);
+    _chart.height = height;
+    _chart.padding = padding;
+    _chart.changeData(data);
+    _chart.render();
   }
 
-  ngOnInit() {
+  ngOnInit(): void {
+    if (!this.platform.isBrowser) {
+      return;
+    }
     this.ngZone.runOutsideAngular(() => setTimeout(() => this.install(), this.delay));
   }
 
@@ -117,8 +141,8 @@ export class G2MiniBarComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.chart) {
-      this.ngZone.runOutsideAngular(() => this.chart.destroy());
+    if (this._chart) {
+      this.ngZone.runOutsideAngular(() => this._chart.destroy());
     }
   }
 }

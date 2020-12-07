@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { AlainConfig, ALAIN_CONFIG, LazyService } from '@delon/util';
 import { NzSafeAny } from 'ng-zorro-antd/core/types';
 import { concat } from 'rxjs';
-import { filter, flatMap, tap } from 'rxjs/operators';
+import { filter, mergeMap, tap } from 'rxjs/operators';
 import { LodopModule } from './lodop.module';
 import { LodopService } from './lodop.service';
 import { Lodop } from './lodop.types';
@@ -15,7 +15,7 @@ let isErrRequest = false;
 let loadCount = 0;
 let isNullLodop = false;
 class MockLazyService {
-  loadScript() {
+  loadScript(): Promise<{ status: string }> {
     ++loadCount;
     if (isErrRequest) return Promise.resolve({ status: 'error' });
 
@@ -27,11 +27,11 @@ class MockLazyService {
 describe('abc: lodop', () => {
   let srv: LodopService;
 
-  function fnLodopConfig() {
+  function fnLodopConfig(): AlainConfig {
     return cog;
   }
 
-  function genModule() {
+  function genModule(): void {
     TestBed.configureTestingModule({
       imports: [LodopModule],
       providers: [
@@ -191,6 +191,7 @@ describe('abc: lodop', () => {
       const code = `
             LODOP.PRINT_INITA(10, 10, 762, 533, '{{title}}');
             LODOP.SET_PRINT_STYLEA(0, 'FontName', '{{fs}}');
+            LODOP.NEWPAGE();
             LODOP.xxx(10, 10, 762, 533, '{{title2}}');
             `;
       let mockRes = '';
@@ -199,7 +200,7 @@ describe('abc: lodop', () => {
         SET_LICENSES: jasmine.createSpy('SET_LICENSES'),
         SET_PRINT_STYLEA: jasmine.createSpy('SET_PRINT_STYLEA'),
         // tslint:disable-next-line: only-arrow-functions
-        PRINT_INITA: jasmine.createSpy('PRINT_INITA').and.callFake(function () {
+        PRINT_INITA: jasmine.createSpy('PRINT_INITA').and.callFake(function (): void {
           mockRes = arguments[4];
         }),
         webskt: {
@@ -209,7 +210,7 @@ describe('abc: lodop', () => {
 
       srv.lodop.subscribe(() => {
         expect(mockLodop.PRINT_INITA).not.toHaveBeenCalled();
-        srv.attachCode(code, contextData, /LODOP\.([^(]+)\(([^\n]+)\);/i);
+        srv.attachCode(code, contextData, /LODOP\.([^(]+)\(([^\n]+)?\);/i);
         expect(mockLodop.PRINT_INITA).toHaveBeenCalled();
         expect(mockRes).toBe(contextData.title);
         done();
@@ -225,7 +226,7 @@ describe('abc: lodop', () => {
         `;
     mockLodop = {
       SET_LICENSES: jasmine.createSpy('SET_LICENSES'),
-      PRINT_DESIGN: jasmine.createSpy('PRINT_DESIGN').and.callFake(function () {
+      PRINT_DESIGN: jasmine.createSpy('PRINT_DESIGN').and.callFake(function (): number {
         const that = this;
         setTimeout(() => that.On_Return(0, code), 30);
         setTimeout(() => that.On_Return(1, code), 31);
@@ -255,7 +256,7 @@ describe('abc: lodop', () => {
       mockLodop = {
         SET_LICENSES: jasmine.createSpy('SET_LICENSES'),
         PRINT_INITA: jasmine.createSpy('PRINT_INITA'),
-        PRINT: jasmine.createSpy('PRINT').and.callFake(function () {
+        PRINT: jasmine.createSpy('PRINT').and.callFake(function (): number {
           const that = this;
           if (isPrintError) {
             setTimeout(() => that.On_Return(0, '缺纸'), 10);
@@ -275,7 +276,7 @@ describe('abc: lodop', () => {
         .pipe(
           filter(w => w.ok),
           tap(() => srv.print(code, {})),
-          flatMap(() => srv.events),
+          mergeMap(() => srv.events),
           filter(w => w.ok),
         )
         .subscribe(() => {
@@ -288,7 +289,7 @@ describe('abc: lodop', () => {
         .pipe(
           filter(w => w.ok),
           tap(() => srv.print(code, [{ index: 0 }, { index: 1 }])),
-          flatMap(() => srv.events),
+          mergeMap(() => srv.events),
           filter(w => w.ok && w.item.index === 1),
         )
         .subscribe(() => {
@@ -315,7 +316,7 @@ describe('abc: lodop', () => {
             isPrintError = true;
             srv.print(code, {});
           }),
-          flatMap(() => srv.events),
+          mergeMap(() => srv.events),
         )
         .subscribe(res => {
           expect(mockLodop.PRINT).toHaveBeenCalled();

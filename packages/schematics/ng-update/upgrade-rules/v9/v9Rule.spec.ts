@@ -1,6 +1,5 @@
 import { SchematicTestRunner, UnitTestTree } from '@angular-devkit/schematics/testing';
-import { createAlainApp } from '../../../utils/testing';
-import { migrationCollection } from '../../test-cases/index.spec';
+import { createAlainApp, migrationCollection } from '../../../utils/testing';
 
 describe('Schematic: ng-update: v9Rule', () => {
   let runner: SchematicTestRunner;
@@ -10,7 +9,7 @@ describe('Schematic: ng-update: v9Rule', () => {
     ({ runner, tree } = await createAlainApp());
   });
 
-  async function runMigration() {
+  async function runMigration(): Promise<void> {
     runner = new SchematicTestRunner('schematics', migrationCollection);
     await runner.runSchematicAsync('migration-v9', {}, tree).toPromise();
   }

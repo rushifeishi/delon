@@ -31,12 +31,11 @@ done
 
 buildLess() {
   echo 'copy styles...'
-  node ./scripts/build/generate-less.js
-  echo 'fix zorro paths...'
-  sed -i -r "s/~ng-zorro-antd/..\/..\/..\/..\/node_modules\/ng-zorro-antd/g" `grep ~ng-zorro-antd -rl ${DIST}/theme/styles/`
+  node ./scripts/build/copy-less.js
+  echo 'fix zorro path...'
+  node ./scripts/build/fix-zorro-path.js
   echo 'build full css...'
   node ./scripts/build/generate-css.js
-  node ./scripts/build/generate-css.js min
 }
 
 containsElement () {
@@ -64,6 +63,10 @@ addBanners() {
       mv ${file}.tmp ${file}
     fi
   done
+}
+
+copySchemas() {
+  cp ${SOURCE}/abc/onboarding/schema.json ${DIST}/abc/onboarding/schema.json
 }
 
 VERSION=$(node -p "require('./package.json').version")
@@ -103,6 +106,7 @@ build() {
   done
 
   buildLess
+  copySchemas
 }
 
 build
@@ -115,7 +119,7 @@ echo 'FINISHED!'
 if [[ ${DEBUG} == true ]]; then
   cd ../../
   DEBUG_FROM=${PWD}/work/delon/dist/@delon/*
-  DEBUG_TO=${PWD}/work/ng-alain/node_modules/@delon/
+  DEBUG_TO=${PWD}/work/ng-alain-themes/node_modules/@delon/
   echo "DEBUG_FROM:${DEBUG_FROM}"
   echo "DEBUG_TO:${DEBUG_TO}"
   rm -rf ${DEBUG_TO}

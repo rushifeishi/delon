@@ -6,14 +6,13 @@ import { pluginAsdf } from './plugin.asdf';
 import { pluginCodeStyle } from './plugin.code-style';
 import { pluginDefaultLanguage } from './plugin.default-language';
 import { pluginDocker } from './plugin.docker';
-import { pluginHmr } from './plugin.hmr';
 import { pluginIcon } from './plugin.icon';
 import { pluginIE } from './plugin.ie';
 import { pluginNetworkEnv } from './plugin.network-env';
 import { pluginSTS } from './plugin.sts';
 import { Schema as PluginSchema } from './schema';
 
-function installPackages() {
+function installPackages(): (_host: Tree, context: SchematicContext) => void {
   return (_host: Tree, context: SchematicContext) => {
     context.addTask(new NodePackageInstallTask());
   };
@@ -38,9 +37,6 @@ export default function (options: PluginSchema): Rule {
         break;
       case 'networkEnv':
         rules.push(pluginNetworkEnv({ ...pluginOptions, packageManager: options.packageManager }));
-        break;
-      case 'hmr':
-        rules.push(pluginHmr(pluginOptions), installPackages());
         break;
       case 'docker':
         rules.push(pluginDocker(pluginOptions));

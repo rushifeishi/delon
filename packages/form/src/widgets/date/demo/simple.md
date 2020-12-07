@@ -15,16 +15,14 @@ Simplest of usage.
 
 ```ts
 import { Component } from '@angular/core';
+import { SFDateWidgetSchema, SFSchema } from '@delon/form';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { SFSchema, SFDateWidgetSchema } from '@delon/form';
 
 @Component({
-  selector: 'app-demo',
-  template: `
-    <sf [schema]="schema" (formSubmit)="submit($event)" (formChange)="change($event)"></sf>
-  `,
+  selector: 'form-date-simple',
+  template: ` <sf [schema]="schema" (formSubmit)="submit($event)" (formChange)="change($event)"></sf> `,
 })
-export class DemoComponent {
+export class FormDateSimpleComponent {
   schema: SFSchema = {
     properties: {
       datetime: {
@@ -66,13 +64,13 @@ export class DemoComponent {
     },
   };
 
-  constructor(public msg: NzMessageService) {}
+  constructor(private msg: NzMessageService) {}
 
-  submit(value: any) {
+  submit(value: {}): void {
     this.msg.success(JSON.stringify(value));
   }
 
-  change(value: any) {
+  change(value: {}): void {
     console.log('change', value);
   }
 }

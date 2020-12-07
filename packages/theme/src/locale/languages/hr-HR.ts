@@ -16,7 +16,7 @@ export default {
     close: 'Zatvori karticu',
     closeOther: 'Zatvori druge kartice',
     closeRight: 'Zatvori kartice desno',
-    clear: 'Obriši kartice',
+    refresh: 'Refresh',
   },
   tagSelect: {
     expand: 'Proširi',
@@ -38,5 +38,11 @@ export default {
     addText: 'Dodaj',
     removeText: 'Ukloni',
     checkAllText: 'Označi sve',
+  },
+  onboarding: {
+    skip: `Preskočiti`,
+    prev: `Prethodna`,
+    next: `Sljedeći`,
+    done: `Sastavljeno`,
   },
 } as FullLocaleData;

@@ -2,7 +2,9 @@ import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { ArrayProperty } from '../../model/array.property';
 import { FormProperty } from '../../model/form.property';
 import { SFGridSchema } from '../../schema/ui';
+import { toBool } from '../../utils';
 import { ObjectLayoutWidget } from '../../widget';
+import { SFObjectWidgetRenderType } from './schema';
 
 @Component({
   selector: 'sf-object',
@@ -12,13 +14,19 @@ import { ObjectLayoutWidget } from '../../widget';
 })
 export class ObjectWidget extends ObjectLayoutWidget implements OnInit {
   grid: SFGridSchema;
+  type: SFObjectWidgetRenderType = 'default';
   list: Array<{}> = [];
   title: string;
+  showExpand = true;
+  expand = true;
 
   ngOnInit(): void {
     const { formProperty, ui } = this;
-    const { grid, showTitle } = ui;
-    if (!formProperty.isRoot() && !(formProperty.parent instanceof ArrayProperty) && showTitle === true) {
+    const { grid, showTitle, type } = ui;
+    this.showExpand = toBool(ui.showExpand, true);
+    this.expand = toBool(ui.expand, true);
+    this.type = type ?? 'default';
+    if (this.type === 'card' || (!formProperty.isRoot() && !(formProperty.parent instanceof ArrayProperty) && showTitle === true)) {
       this.title = this.schema.title as string;
     }
     this.grid = grid as SFGridSchema;
@@ -34,5 +42,13 @@ export class ObjectWidget extends ObjectLayoutWidget implements OnInit {
       list.push(item);
     }
     this.list = list;
+  }
+
+  changeExpand(): void {
+    if (!this.showExpand) {
+      return;
+    }
+    this.expand = !this.expand;
+    this.detectChanges(true);
   }
 }

@@ -3,12 +3,14 @@ type: Layout
 title: ellipsis
 subtitle: Ellipsis
 cols: 1
-module: EllipsisModule
+module: import { EllipsisModule } from '@delon/abc/ellipsis';
 ---
 
 When the text is too long, the Ellipsis automatically shortens it according to its length or the maximum number of lines.
 
 ## API
+
+### ellipsis
 
 | Property | Description | Type | Default |
 |----------|-------------|------|---------|

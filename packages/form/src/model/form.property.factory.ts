@@ -51,7 +51,7 @@ export class FormPropertyFactory {
       newProperty = this.createProperty(refSchema, ui, formData, parent, path);
     } else {
       // fix required
-      if (propertyId && parent!.schema.required!.indexOf(propertyId.split(SF_SEQ).pop()!) !== -1) {
+      if ((propertyId && parent!.schema.required!.indexOf(propertyId.split(SF_SEQ).pop()!) !== -1) || ui.showRequired === true) {
         ui._required = true;
       }
       // fix title
@@ -65,7 +65,7 @@ export class FormPropertyFactory {
         else if ((ui as SFUISchemaItem).widget === 'time')
           ui._format = schema.type === 'string' ? this.options.uiTimeStringFormat : this.options.uiTimeNumberFormat;
       } else {
-        ui._format = schema.format || ui.format;
+        ui._format = ui.format;
       }
       switch (schema.type) {
         case 'integer':
@@ -96,7 +96,7 @@ export class FormPropertyFactory {
     return newProperty;
   }
 
-  private initializeRoot(rootProperty: PropertyGroup) {
+  private initializeRoot(rootProperty: PropertyGroup): void {
     // rootProperty.init();
     rootProperty._bindVisibility();
   }

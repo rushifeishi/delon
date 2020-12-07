@@ -8,36 +8,41 @@ browser: 400
 
 ```ts
 import { Component } from '@angular/core';
+import { GlobalFooterLink } from '@delon/abc/global-footer';
 
 @Component({
   selector: 'components-global-footer-basic',
   template: `
-  <div style="background:#f5f5f5; height: 100%;">
     <div style="height: 280px;"></div>
     <global-footer [links]="links">
       Copyright<i nz-icon nzType="copyright" class="mx-sm"></i>2019<a href="//github.com/cipchk" target="_blank" class="mx-sm">卡色</a>出品
     </global-footer>
-  </div>
   `,
-  styles: [ `:host { display: block; }` ]
+  styles: [
+    `
+      :host {
+        display: block;
+      }
+    `,
+  ],
 })
 export class DemoComponent {
-  links = [
+  links: GlobalFooterLink[] = [
     {
       title: '帮助',
       href: 'https://ng-alain.com/',
-      blankTarget: true
+      blankTarget: true,
     },
     {
       title: 'Github',
       href: 'https://github.com/ng-alain',
-      blankTarget: true
+      blankTarget: true,
     },
     {
       title: '预览',
       href: 'https://ng-alain.surge.sh/',
-      blankTarget: true
-    }
+      blankTarget: true,
+    },
   ];
 }
 ```

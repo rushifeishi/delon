@@ -1,4 +1,4 @@
-import { DisabledDateFn, DisabledTimeFn, SupportTimeOptions } from 'ng-zorro-antd/date-picker/standard-types';
+import { DisabledDateFn, DisabledTimeFn, SupportTimeOptions } from 'ng-zorro-antd/date-picker';
 import { SFDLSSize, SFUISchemaItem } from '../../schema/ui';
 
 export interface SFDateWidgetSchema extends SFUISchemaItem {
@@ -56,6 +56,11 @@ export interface SFDateWidgetSchema extends SFUISchemaItem {
   dropdownClassName?: string;
 
   /**
+   * Set picker mode of range picker, default: `date`
+   */
+  rangeMode?: 'date' | 'week' | 'month' | 'year';
+
+  /**
    * A callback emitter, can be executed whether the popup calendar is popped up or closed
    */
   onOpenChange?: (status: boolean) => void;
@@ -86,7 +91,17 @@ export interface SFDateWidgetSchema extends SFUISchemaItem {
   showToday?: boolean;
 
   /**
+   * Set the readonly attribute of the input tag (avoids virtual keyboard on touch devices), default: `false`
+   */
+  inputReadOnly?: boolean;
+
+  /**
    * Callback when click ok button
    */
   onOk?: (data: Date | Date[]) => void;
+
+  /**
+   * Date change callback
+   */
+  change?: (data: Date | Date[] | null) => void;
 }

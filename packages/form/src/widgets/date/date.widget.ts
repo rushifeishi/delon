@@ -56,25 +56,28 @@ export class DateWidget extends ControlUIWidget<SFDateWidgetSchema> implements O
     };
   }
 
-  reset(value: SFValue) {
+  reset(value: SFValue): void {
     value = toDate(value, { formatString: this.startFormat, defaultValue: null });
     if (this.flatRange) {
-      this.displayValue =
-        value == null
-          ? []
-          : [
-              value,
-              toDate(this.endProperty.formData as NzSafeAny, { formatString: this.endFormat || this.startFormat, defaultValue: null }),
-            ];
+      const endValue = toDate(this.endProperty.formData as NzSafeAny, {
+        formatString: this.endFormat || this.startFormat,
+        defaultValue: null,
+      });
+      this.displayValue = value == null || endValue == null ? [] : [value, endValue];
     } else {
       this.displayValue = value;
     }
     this.detectChanges();
     // TODO: Need to wait for the rendering to complete, otherwise it will be overwritten of end widget
-    setTimeout(() => this._change(this.displayValue));
+    if (this.displayValue) {
+      setTimeout(() => this._change(this.displayValue, false));
+    }
   }
 
-  _change(value: Date | Date[] | null) {
+  _change(value: Date | Date[] | null, emitModelChange: boolean = true): void {
+    if (emitModelChange && this.ui.change) {
+      this.ui.change(value);
+    }
     if (value == null || (Array.isArray(value) && value.length < 2)) {
       this.setValue(null);
       this.setEnd(null);
@@ -93,11 +96,11 @@ export class DateWidget extends ControlUIWidget<SFDateWidgetSchema> implements O
     }
   }
 
-  _openChange(status: boolean) {
+  _openChange(status: boolean): void {
     if (this.ui.onOpenChange) this.ui.onOpenChange(status);
   }
 
-  _ok(value: any) {
+  _ok(value: any): void {
     if (this.ui.onOk) this.ui.onOk(value);
   }
 
@@ -105,7 +108,7 @@ export class DateWidget extends ControlUIWidget<SFDateWidgetSchema> implements O
     return (this.formProperty.parent!.properties as { [key: string]: FormProperty })[this.ui.end!];
   }
 
-  private setEnd(value: string | null) {
+  private setEnd(value: string | null): void {
     if (!this.flatRange) return;
 
     this.endProperty.setValue(value, true);

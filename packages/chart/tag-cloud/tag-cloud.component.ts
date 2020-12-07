@@ -1,18 +1,20 @@
+import { Platform } from '@angular/cdk/platform';
 import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
+  EventEmitter,
   Input,
   NgZone,
   OnChanges,
   OnDestroy,
   OnInit,
+  Output,
   ViewEncapsulation,
 } from '@angular/core';
 import DataSet from '@antv/data-set';
-import { Chart, registerShape, Util } from '@antv/g2';
-import { LooseObject } from '@antv/g2/lib/interface';
-import { AlainConfigService, deprecation10, InputNumber } from '@delon/util';
+import { Chart, Event, registerShape, Types, Util } from '@antv/g2';
+import { AlainConfigService, InputNumber, NumberInput } from '@delon/util';
 import { NzSafeAny } from 'ng-zorro-antd/core/types';
 import { fromEvent, Subscription } from 'rxjs';
 import { debounceTime, filter } from 'rxjs/operators';
@@ -20,15 +22,12 @@ import { debounceTime, filter } from 'rxjs/operators';
 export interface G2TagCloudData {
   value?: number;
   name?: string;
-  /**
-   * @deprecated Use `name` instead
-   */
-  x?: string;
-  /**
-   * @deprecated 10.0.0. This is deprecated and going to be removed in 10.0.0.
-   */
-  category?: any;
   [key: string]: any;
+}
+
+export interface G2TagCloudClickItem {
+  item: G2TagCloudData;
+  ev: Event;
 }
 
 @Component({
@@ -40,8 +39,16 @@ export interface G2TagCloudData {
   encapsulation: ViewEncapsulation.None,
 })
 export class G2TagCloudComponent implements OnDestroy, OnChanges, OnInit {
+  static ngAcceptInputType_delay: NumberInput;
+  static ngAcceptInputType_height: NumberInput;
+  static ngAcceptInputType_width: NumberInput;
+
   private resize$: Subscription;
-  private chart: Chart;
+  private _chart: Chart;
+
+  get chart(): Chart {
+    return this._chart;
+  }
 
   // #region fields
 
@@ -50,19 +57,23 @@ export class G2TagCloudComponent implements OnDestroy, OnChanges, OnInit {
   @Input() @InputNumber() height = 200;
   @Input() padding: number | number[] | 'auto' = 0;
   @Input() data: G2TagCloudData[] = [];
-  @Input() theme: string | LooseObject;
+  @Input() theme: string | Types.LooseObject;
+  @Output() clickItem = new EventEmitter<G2TagCloudClickItem>();
 
   // #endregion
 
-  constructor(private el: ElementRef<HTMLDivElement>, private ngZone: NgZone, configSrv: AlainConfigService) {
+  constructor(private el: ElementRef<HTMLDivElement>, private ngZone: NgZone, configSrv: AlainConfigService, private platform: Platform) {
     configSrv.attachKey(this, 'chart', 'theme');
   }
 
-  private initTagCloud() {
+  private initTagCloud(): void {
     registerShape('point', 'cloud', {
-      draw(cfg, container: NzSafeAny) {
+      // tslint:disable-next-line: typedef
+      draw(cfg, container) {
         const data = cfg.data as NzSafeAny;
-        const textShape = container.addShape('text', {
+        const textShape = container.addShape({
+          type: 'text',
+          name: 'tag-cloud-text',
           attrs: {
             ...cfg.style,
             fontSize: data.size,
@@ -73,7 +84,7 @@ export class G2TagCloudComponent implements OnDestroy, OnChanges, OnInit {
             textBaseline: 'Alphabetic',
             x: cfg.x,
             y: cfg.y,
-          },
+          } as NzSafeAny,
         });
         if (data.rotate) {
           Util.rotate(textShape, (data.rotate * Math.PI) / 180);
@@ -83,7 +94,7 @@ export class G2TagCloudComponent implements OnDestroy, OnChanges, OnInit {
     });
   }
 
-  private install() {
+  private install(): void {
     const { el, padding, theme } = this;
     if (this.height === 0) {
       this.height = this.el.nativeElement.clientHeight;
@@ -92,7 +103,7 @@ export class G2TagCloudComponent implements OnDestroy, OnChanges, OnInit {
       this.width = this.el.nativeElement.clientWidth;
     }
 
-    const chart = (this.chart = new Chart({
+    const chart = (this._chart = new Chart({
       container: el.nativeElement,
       autoFit: false,
       padding,
@@ -125,27 +136,20 @@ export class G2TagCloudComponent implements OnDestroy, OnChanges, OnInit {
       });
     chart.interaction('element-active');
 
+    chart.on('tag-cloud-text:click', (ev: Event) => {
+      this.ngZone.run(() => this.clickItem.emit({ item: ev.data?.data, ev }));
+    });
+
     this.attachChart();
   }
 
-  private attachChart() {
-    const { chart, padding, data } = this;
-    if (!chart || !data || data.length <= 0) return;
+  private attachChart(): void {
+    const { _chart, padding, data } = this;
+    if (!_chart || !data || data.length <= 0) return;
 
-    // TODO: compatible
-    if (data.find(w => !!w.x) != null) {
-      deprecation10('g2-tag-cloud', 'x', 'name');
-      data.forEach(item => {
-        item.name = item.x;
-      });
-    }
-    if (data.find(w => !!w.category) != null) {
-      deprecation10('g2-tag-cloud', 'category');
-    }
-
-    chart.height = this.height;
-    chart.width = this.width;
-    chart.padding = padding;
+    _chart.height = this.height;
+    _chart.width = this.width;
+    _chart.padding = padding;
 
     const dv = new DataSet.View().source(data);
     const range = dv.range('value');
@@ -160,6 +164,7 @@ export class G2TagCloudComponent implements OnDestroy, OnChanges, OnInit {
       size: [this.width, this.height], // 宽高设置最好根据 imageMask 做调整
       padding: 0,
       timeInterval: 5000, // max execute time
+      // tslint:disable-next-line: typedef
       rotate() {
         let random = ~~(Math.random() * 4) % 4;
         if (random === 2) {
@@ -167,28 +172,32 @@ export class G2TagCloudComponent implements OnDestroy, OnChanges, OnInit {
         }
         return random * 90; // 0, 90, 270
       },
+      // tslint:disable-next-line: typedef
       fontSize(d: NzSafeAny) {
         return ((d.value - min) / (max - min)) * (32 - 8) + 8;
       },
     } as NzSafeAny);
-    chart.data(dv.rows);
-    chart.render();
+    _chart.data(dv.rows);
+    _chart.render();
   }
 
-  private _attachChart() {
+  private _attachChart(): void {
     this.ngZone.runOutsideAngular(() => this.attachChart());
   }
 
-  private installResizeEvent() {
+  private installResizeEvent(): void {
     this.resize$ = fromEvent(window, 'resize')
       .pipe(
-        filter(() => !!this.chart),
+        filter(() => !!this._chart),
         debounceTime(200),
       )
       .subscribe(() => this._attachChart());
   }
 
   ngOnInit(): void {
+    if (!this.platform.isBrowser) {
+      return;
+    }
     this.initTagCloud();
     this.installResizeEvent();
     this.ngZone.runOutsideAngular(() => setTimeout(() => this.install(), this.delay));
@@ -199,9 +208,11 @@ export class G2TagCloudComponent implements OnDestroy, OnChanges, OnInit {
   }
 
   ngOnDestroy(): void {
-    this.resize$.unsubscribe();
-    if (this.chart) {
-      this.ngZone.runOutsideAngular(() => this.chart.destroy());
+    if (this.resize$) {
+      this.resize$.unsubscribe();
+    }
+    if (this._chart) {
+      this.ngZone.runOutsideAngular(() => this._chart.destroy());
     }
   }
 }

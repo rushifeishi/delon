@@ -1,3 +1,4 @@
+import { Platform } from '@angular/cdk/platform';
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -18,25 +19,27 @@ import {
 import { DomSanitizer } from '@angular/platform-browser';
 import { ACLService } from '@delon/acl';
 import { AlainI18NService, ALAIN_I18N_TOKEN, DelonLocaleService, LocaleData } from '@delon/theme';
-import { AlainConfigService, AlainSFConfig, deepCopy, InputBoolean } from '@delon/util';
+import { AlainConfigService, AlainSFConfig, BooleanInput, deepCopy, InputBoolean } from '@delon/util';
 import { NzSafeAny } from 'ng-zorro-antd/core/types';
 import { merge, Observable, Subject } from 'rxjs';
 import { filter, takeUntil } from 'rxjs/operators';
 import { mergeConfig } from './config';
 import { ErrorData } from './errors';
-import { SFButton, SFLayout } from './interface';
+import { SFButton, SFLayout, SFValueChange } from './interface';
 import { FormProperty, PropertyGroup } from './model/form.property';
 import { FormPropertyFactory } from './model/form.property.factory';
 import { SFSchema } from './schema/index';
 import { SFOptionalHelp, SFUISchema, SFUISchemaItem, SFUISchemaItemRun } from './schema/ui';
 import { TerminatorService } from './terminator.service';
-import { di, FORMATMAPS, resolveIf, retrieveSchema } from './utils';
+import { di, resolveIfSchema, retrieveSchema } from './utils';
 import { SchemaValidatorFactory } from './validator.factory';
 import { WidgetFactory } from './widget.factory';
 
-export function useFactory(schemaValidatorFactory: SchemaValidatorFactory, cogSrv: AlainConfigService) {
+export function useFactory(schemaValidatorFactory: SchemaValidatorFactory, cogSrv: AlainConfigService): FormPropertyFactory {
   return new FormPropertyFactory(schemaValidatorFactory, cogSrv);
 }
+
+export type SFMode = 'default' | 'search' | 'edit';
 
 @Component({
   selector: 'sf, [sf]',
@@ -54,24 +57,35 @@ export function useFactory(schemaValidatorFactory: SchemaValidatorFactory, cogSr
   host: {
     '[class.sf]': 'true',
     '[class.sf__inline]': `layout === 'inline'`,
+    '[class.sf__horizontal]': `layout === 'horizontal'`,
     '[class.sf__search]': `mode === 'search'`,
     '[class.sf__edit]': `mode === 'edit'`,
     '[class.sf__no-error]': `onlyVisual`,
     '[class.sf__no-colon]': `noColon`,
+    '[class.sf__compact]': `compact`,
   },
   preserveWhitespaces: false,
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
 })
 export class SFComponent implements OnInit, OnChanges, OnDestroy {
+  static ngAcceptInputType_liveValidate: BooleanInput;
+  static ngAcceptInputType_firstVisual: BooleanInput;
+  static ngAcceptInputType_onlyVisual: BooleanInput;
+  static ngAcceptInputType_compact: BooleanInput;
+  static ngAcceptInputType_loading: BooleanInput;
+  static ngAcceptInputType_disabled: BooleanInput;
+  static ngAcceptInputType_noColon: BooleanInput;
+  static ngAcceptInputType_cleanValue: BooleanInput;
+
   private unsubscribe$ = new Subject<void>();
   private _renders = new Map<string, TemplateRef<void>>();
   private _item: {};
   private _valid = true;
   private _defUi: SFUISchemaItem;
-  private _inited = false;
   readonly options: AlainSFConfig;
 
+  _inited = false;
   locale: LocaleData = {};
   rootProperty: FormProperty | null = null;
   _formData: {};
@@ -108,9 +122,10 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
   @Input() @InputBoolean() firstVisual = true;
   /** 是否只展示错误视觉不显示错误文本 */
   @Input() @InputBoolean() onlyVisual = false;
+  @Input() @InputBoolean() compact = false;
   /** 表单模式 */
   @Input()
-  set mode(value: 'default' | 'search' | 'edit') {
+  set mode(value: SFMode) {
     switch (value) {
       case 'search':
         this.layout = 'inline';
@@ -131,10 +146,10 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
     }
     this._mode = value;
   }
-  get mode() {
+  get mode(): SFMode {
     return this._mode;
   }
-  private _mode: 'default' | 'search' | 'edit';
+  private _mode: SFMode;
   /**
    * Whether to load status，when `true` reset button is disabled status, submit button is loading status
    */
@@ -142,13 +157,10 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
   @Input() @InputBoolean() disabled = false;
   @Input() @InputBoolean() noColon = false;
   @Input() @InputBoolean() cleanValue = false;
-  /** 数据变更时回调 */
+  @Output() readonly formValueChange = new EventEmitter<SFValueChange>();
   @Output() readonly formChange = new EventEmitter<{}>();
-  /** 提交表单时回调 */
   @Output() readonly formSubmit = new EventEmitter<{}>();
-  /** 重置表单时回调 */
   @Output() readonly formReset = new EventEmitter<{}>();
-  /** 表单校验结果回调 */
   @Output() readonly formError = new EventEmitter<ErrorData[]>();
   // #endregion
 
@@ -192,7 +204,7 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
     return this;
   }
 
-  onSubmit(e: Event) {
+  onSubmit(e: Event): void {
     e.preventDefault();
     e.stopPropagation();
     if (!this.liveValidate) this.validator();
@@ -209,6 +221,7 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
     @Optional() private aclSrv: ACLService,
     @Optional() @Inject(ALAIN_I18N_TOKEN) private i18nSrv: AlainI18NService,
     cogSrv: AlainConfigService,
+    private platform: Platform,
   ) {
     this.options = mergeConfig(cogSrv);
     this.liveValidate = this.options.liveValidate as boolean;
@@ -244,7 +257,7 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
     ['optionalHelp'].filter(key => !!this._defUi[key]).forEach(key => (ui[key] = { ...this._defUi[key], ...ui[key] }));
   }
 
-  private coverProperty() {
+  private coverProperty(): void {
     const isHorizontal = this.layout === 'horizontal';
     const _schema = deepCopy(this.schema);
     const { definitions } = _schema;
@@ -263,7 +276,7 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
         const property = retrieveSchema(schema.properties![key] as SFSchema, definitions);
         const ui = {
           widget: property.type,
-          ...(property.format && (FORMATMAPS as NzSafeAny)[property.format]),
+          ...(property.format && (this.options.formatMap as NzSafeAny)[property.format]),
           ...(typeof property.ui === 'string' ? { widget: property.ui } : null),
           ...(!property.format && !property.ui && Array.isArray(property.enum) && property.enum.length > 0 ? { widget: 'select' } : null),
           ...this._defUi,
@@ -286,6 +299,19 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
           ui.spanLabel = null;
           ui.spanControl = null;
           ui.offsetControl = null;
+        }
+        // 内联强制清理 `grid` 参数
+        if (this.layout === 'inline') {
+          delete ui.grid;
+        }
+        // 非水平布局强制清理 `spanLabelFixed` 值
+        if (this.layout !== 'horizontal') {
+          ui.spanLabelFixed = null;
+        }
+        // 当指定标签为固定宽度时无须指定 `spanLabel`，`spanControl`
+        if (ui.spanLabelFixed != null && ui.spanLabelFixed > 0) {
+          ui.spanLabel = null;
+          ui.spanControl = null;
         }
         if (ui.widget === 'date' && ui.end != null) {
           const dateEndProperty = schema.properties![ui.end];
@@ -362,20 +388,6 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
       });
     };
 
-    const inIfFn = (schema: SFSchema, ui: SFUISchemaItemRun) => {
-      Object.keys(schema.properties!).forEach(key => {
-        const property = schema.properties![key];
-        const uiKey = `$${key}`;
-        resolveIf(property, ui[uiKey]);
-        if (property.items) {
-          inIfFn(property.items, ui[uiKey].$items);
-        }
-        if (property.properties) {
-          inIfFn(property, ui[uiKey]);
-        }
-      });
-    };
-
     if (this.ui == null) this.ui = {};
     this._defUi = {
       onlyVisual: this.options.onlyVisual,
@@ -389,6 +401,10 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
     if (this.onlyVisual === true) {
       this._defUi.onlyVisual = true;
     }
+    // 内联强制清理 `grid` 参数
+    if (this.layout === 'inline') {
+      delete this._defUi.grid;
+    }
 
     // root
     this._ui = { ...this._defUi };
@@ -396,15 +412,14 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
     inFn(_schema, _schema, this.ui, this.ui, this._ui);
 
     // cond
-    resolveIf(_schema, this._ui);
-    inIfFn(_schema, this._ui);
+    resolveIfSchema(_schema, this._ui);
 
     this._schema = _schema;
 
     di(this._ui, 'cover schema & ui', this._ui, _schema);
   }
 
-  private coverButtonProperty() {
+  private coverButtonProperty(): void {
     this._btn = {
       render: { size: 'default' },
       ...this.locale,
@@ -412,24 +427,25 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
       ...(this.button as SFButton),
     };
     const firstKey = Object.keys(this._ui).find(w => w.startsWith('$'));
+    const btnRender = this._btn.render!;
     if (this.layout === 'horizontal') {
       const btnUi = firstKey ? this._ui[firstKey] : this._defUi;
-      if (!this._btn.render!.grid) {
-        this._btn.render!.grid = {
+      if (!btnRender.grid) {
+        btnRender.grid = {
           offset: btnUi.spanLabel,
           span: btnUi.spanControl,
         };
       }
       // fixed label
-      if (this._btn.render!.spanLabelFixed == null) {
-        this._btn.render!.spanLabelFixed = btnUi.spanLabelFixed;
+      if (btnRender.spanLabelFixed == null) {
+        btnRender.spanLabelFixed = btnUi.spanLabelFixed;
       }
       // 固定标签宽度时，若不指定样式，则默认居中
-      if (!this._btn.render!.class && typeof btnUi.spanLabelFixed === 'number' && btnUi.spanLabelFixed > 0) {
-        this._btn.render!.class = 'text-center';
+      if (!btnRender.class && typeof btnUi.spanLabelFixed === 'number' && btnUi.spanLabelFixed > 0) {
+        btnRender.class = 'text-center';
       }
     } else {
-      this._btn.render!.grid = {};
+      btnRender.grid = {};
     }
     if (this._mode) {
       this.mode = this._mode;
@@ -439,6 +455,9 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   ngOnInit(): void {
+    if (!this.platform.isBrowser) {
+      return;
+    }
     this._inited = true;
     this.validator();
   }
@@ -452,7 +471,7 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   /** @internal */
-  _addTpl(path: string, templateRef: TemplateRef<void>) {
+  _addTpl(path: string, templateRef: TemplateRef<void>): void {
     if (this._renders.has(path)) {
       console.warn(`Duplicate definition "${path}" custom widget`);
       return;
@@ -461,7 +480,7 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
     this.attachCustomRender();
   }
 
-  private attachCustomRender() {
+  private attachCustomRender(): void {
     this._renders.forEach((tpl, path) => {
       const property = this.rootProperty!.searchProperty(path);
       if (property == null) {
@@ -472,6 +491,9 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   validator(options: { emitError?: boolean; onlyRoot?: boolean } = { emitError: true, onlyRoot: true }): this {
+    if (!this.platform.isBrowser) {
+      return this;
+    }
     const fn = (property: FormProperty) => {
       property._runValidation();
       if (!(property instanceof PropertyGroup) || !property.properties) return;
@@ -495,9 +517,22 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   /**
-   * 刷新 Schema，一般需要动态修改 Schema 某个值时可以方便调用
+   * 刷新整个 Schema，当指定 `newSchema` 表示替换当前的 Schema
+   *
+   * 若希望对某个表单元素进行刷新请使用：
+   * ```
+   * // 获取某个元素
+   * const statusProperty = this.sf.getProperty('/status')!;
+   * // 重置 `schema` 或 `ui` 参数
+   * statusProperty.schema.enum = ['1', '2', '3'];
+   * // 调用 `reset` 重置初始值
+   * statusProperty.widget.reset('2');
+   * ```
    */
   refreshSchema(newSchema?: SFSchema, newUI?: SFUISchema): this {
+    if (!this.platform.isBrowser) {
+      return this;
+    }
     if (newSchema) this.schema = newSchema;
     if (newUI) this.ui = newUI;
 
@@ -521,13 +556,14 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
     this.reset();
 
     let isFirst = true;
-    this.rootProperty.valueChanges.subscribe(value => {
-      this._item = { ...(this.cleanValue ? null : this.formData), ...value };
+    this.rootProperty.valueChanges.subscribe(res => {
+      this._item = { ...(this.cleanValue ? null : this.formData), ...res.value };
       if (isFirst) {
         isFirst = false;
         return;
       }
       this.formChange.emit(this._item);
+      this.formValueChange.emit({ value: this._item, path: res.path, pathValue: res.pathValue });
     });
     this.rootProperty.errorsChanges.subscribe(errors => {
       this._valid = !(errors && errors.length);
@@ -542,7 +578,10 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
    * 重置表单
    * @param [emit] 是否触发 `formReset` 事件，默认：`false`
    */
-  reset(emit = false): this {
+  reset(emit: boolean = false): this {
+    if (!this.platform.isBrowser) {
+      return this;
+    }
     this.rootProperty!.resetValue(this.formData, false);
     Promise.resolve().then(() => this.cdr.detectChanges());
     if (emit) {
@@ -551,7 +590,7 @@ export class SFComponent implements OnInit, OnChanges, OnDestroy {
     return this;
   }
 
-  private cleanRootSub() {
+  private cleanRootSub(): void {
     if (!this.rootProperty) return;
     this.rootProperty.errorsChanges.unsubscribe();
     this.rootProperty.valueChanges.unsubscribe();

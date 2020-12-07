@@ -2,8 +2,8 @@
 title: g2-mini-area
 subtitle: 迷你区域图
 cols: 2
-module: G2GaugeModule
 type: Components
+module: import { G2MiniAreaModule } from '@delon/chart/mini-area';
 ---
 
 面积图又叫区域图。 它是在折线图的基础之上形成的, 它将折线图中折线与自变量坐标轴之间的区域使用颜色或者纹理填充，这样一个填充区域我们叫做面积，颜色的填充可以更好的突出趋势信息。
@@ -12,8 +12,8 @@ type: Components
 
 ### g2-mini-area
 
-| 参数      | 说明                   | 类型         | 默认值 |
-|----------|------------------------|-------------|-------|
+| 参数 | 说明 | 类型 | 默认值 |
+|----|----|----|-----|
 | `[delay]` | 延迟渲染，单位：毫秒 | `number` | `0` |
 | `[color]` | 图表颜色 | `string` | `rgba(24, 144, 255, 0.2)` |
 | `[borderColor]` | 图表边颜色 | `string` | `#1890FF` |
@@ -27,10 +27,11 @@ type: Components
 | `[tooltipType]` | Tooltip显示类型 | `'mini','default'` | `'default'` |
 | `[data]` | 数据 | `G2MiniAreaData[]` | - |
 | `[theme]` | 定制图表主题 | `string | LooseObject` | - |
+| `(clickItem)` | 点击项回调 | `EventEmitter<G2MiniAreaClickItem>` | - |
 
 ### G2MiniAreaData
 
-| 参数  | 说明 | 类型     | 默认值 |
-|-------|-----|----------|--------|
-| `[x]` | x轴  | `any` | -      |
-| `[y]` | y轴  | `any` | -      |
+| 参数 | 说明 | 类型 | 默认值 |
+|----|----|----|-----|
+| `[x]` | x轴 | `any` | - |
+| `[y]` | y轴 | `any` | - |

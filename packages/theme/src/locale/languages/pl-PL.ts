@@ -1,7 +1,7 @@
 import { FullLocaleData } from '../locale.types';
 
 export default {
-  abbr: 'en-US',
+  abbr: 'pl-PL',
   exception: {
     403: `Niestety, nie masz uprawnień do tej strony`,
     404: `Niestety, ta strona nie istnieje`,
@@ -16,7 +16,7 @@ export default {
     close: 'Zamknij kartę',
     closeOther: 'Zamknij inne karty',
     closeRight: 'Zamknij karty po prawej',
-    clear: 'Wyczyść karty',
+    refresh: 'Refresh',
   },
   tagSelect: {
     expand: 'Rozszerz',
@@ -74,5 +74,11 @@ export default {
       formatExclusiveMinimum: `formatExclusiveMinimum should be boolean`,
       if: `Should match "{failingKeyword}" schema`,
     },
+  },
+  onboarding: {
+    skip: `Pominąć`,
+    prev: `Poprzedni`,
+    next: `Kolejny`,
+    done: `Gotowe`,
   },
 } as FullLocaleData;

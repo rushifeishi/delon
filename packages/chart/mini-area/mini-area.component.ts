@@ -1,22 +1,29 @@
+import { Platform } from '@angular/cdk/platform';
 import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
+  EventEmitter,
   Input,
   NgZone,
   OnChanges,
   OnDestroy,
   OnInit,
+  Output,
   ViewEncapsulation,
 } from '@angular/core';
-import { Chart } from '@antv/g2';
-import { LooseObject, TooltipOption } from '@antv/g2/lib/interface';
-import { AlainConfigService, InputBoolean, InputNumber } from '@delon/util';
+import { Chart, Event, Types } from '@antv/g2';
+import { AlainConfigService, BooleanInput, InputBoolean, InputNumber, NumberInput } from '@delon/util';
 
 export interface G2MiniAreaData {
   x: any;
   y: any;
   [key: string]: any;
+}
+
+export interface G2MiniAreaClickItem {
+  item: G2MiniAreaData;
+  ev: Event;
 }
 
 @Component({
@@ -31,7 +38,18 @@ export interface G2MiniAreaData {
   encapsulation: ViewEncapsulation.None,
 })
 export class G2MiniAreaComponent implements OnInit, OnChanges, OnDestroy {
-  private chart: Chart;
+  static ngAcceptInputType_delay: NumberInput;
+  static ngAcceptInputType_borderWidth: NumberInput;
+  static ngAcceptInputType_height: NumberInput;
+  static ngAcceptInputType_fit: BooleanInput;
+  static ngAcceptInputType_line: BooleanInput;
+  static ngAcceptInputType_animate: BooleanInput;
+
+  private _chart: Chart;
+
+  get chart(): Chart {
+    return this._chart;
+  }
 
   // #region fields
 
@@ -49,17 +67,18 @@ export class G2MiniAreaComponent implements OnInit, OnChanges, OnDestroy {
   @Input() data: G2MiniAreaData[] = [];
   @Input() yTooltipSuffix = '';
   @Input() tooltipType: 'mini' | 'default' = 'default';
-  @Input() theme: string | LooseObject;
+  @Input() theme: string | Types.LooseObject;
+  @Output() clickItem = new EventEmitter<G2MiniAreaClickItem>();
 
   // #endregion
 
-  constructor(private el: ElementRef, private ngZone: NgZone, configSrv: AlainConfigService) {
+  constructor(private el: ElementRef, private ngZone: NgZone, configSrv: AlainConfigService, private platform: Platform) {
     configSrv.attachKey(this, 'chart', 'theme');
   }
 
-  private install() {
+  private install(): void {
     const { el, fit, height, padding, xAxis, yAxis, yTooltipSuffix, tooltipType, line, theme } = this;
-    const chart = (this.chart = new Chart({
+    const chart = (this._chart = new Chart({
       container: el.nativeElement,
       autoFit: fit,
       height,
@@ -84,7 +103,7 @@ export class G2MiniAreaComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     chart.legend(false);
-    const tooltipOption: TooltipOption = {
+    const tooltipOption: Types.TooltipOption = {
       showTitle: false,
       showMarkers: true,
       enterable: true,
@@ -112,32 +131,41 @@ export class G2MiniAreaComponent implements OnInit, OnChanges, OnDestroy {
       chart.line().position('x*y').shape('smooth').tooltip(false);
     }
 
+    chart.on(`plot:click`, (ev: Event) => {
+      const records = this._chart.getSnapRecords({ x: ev.x, y: ev.y });
+      this.ngZone.run(() => this.clickItem.emit({ item: records[0]._origin, ev }));
+    });
+
     chart.render();
 
     this.attachChart();
   }
 
-  private attachChart() {
-    const { chart, line, fit, height, animate, padding, data, color, borderColor, borderWidth } = this;
-    if (!chart || !data || data.length <= 0) {
+  private attachChart(): void {
+    const { _chart, line, fit, height, animate, padding, data, color, borderColor, borderWidth } = this;
+    if (!_chart || !data || data.length <= 0) {
       return;
     }
 
-    const geoms = chart.geometries;
+    const geoms = _chart.geometries;
     geoms.forEach(g => g.color(color));
     if (line) {
       geoms[1].color(borderColor).size(borderWidth);
     }
 
-    chart.autoFit = fit;
-    chart.height = height;
-    chart.animate(animate);
-    chart.padding = padding;
+    _chart.autoFit = fit;
+    _chart.height = height;
+    _chart.animate(animate);
+    _chart.padding = padding;
 
-    chart.changeData(data);
+    _chart.changeData(data);
+    _chart.render();
   }
 
-  ngOnInit() {
+  ngOnInit(): void {
+    if (!this.platform.isBrowser) {
+      return;
+    }
     this.ngZone.runOutsideAngular(() => setTimeout(() => this.install(), this.delay));
   }
 
@@ -146,8 +174,8 @@ export class G2MiniAreaComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.chart) {
-      this.ngZone.runOutsideAngular(() => this.chart.destroy());
+    if (this._chart) {
+      this.ngZone.runOutsideAngular(() => this._chart.destroy());
     }
   }
 }

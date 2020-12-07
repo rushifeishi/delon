@@ -1,8 +1,13 @@
-import { chain, Rule, schematic } from '@angular-devkit/schematics';
+import { chain, Rule, schematic, Tree } from '@angular-devkit/schematics';
+import { readdirSync, statSync } from 'fs';
+import { join } from 'path';
 import { Schema as ApplicationOptions } from '../application/schema';
+import { getJSON } from '../utils/json';
 import { Schema as NgAddOptions } from './schema';
 
-export default function (options: NgAddOptions): Rule {
+const V = 11;
+
+function genRules(options: NgAddOptions): Rule {
   const rules: Rule[] = [];
 
   const applicationOptions: ApplicationOptions = { ...options };
@@ -42,9 +47,38 @@ export default function (options: NgAddOptions): Rule {
     );
   }
 
-  if (options.hmr) {
-    rules.push(schematic('plugin', { name: 'hmr', type: 'add' }));
-  }
-
   return chain(rules);
+}
+
+function getFiles(): string[] {
+  const nodeModulesPath = join(process.cwd(), 'node_modules');
+  if (!statSync(nodeModulesPath).isDirectory()) return [];
+  return readdirSync(nodeModulesPath) || [];
+}
+
+function isUseCNPM(): boolean {
+  const names = getFiles();
+  const res = ['_@angular', '_ng-zorro-antd'].every(prefix => names.findIndex(w => w.startsWith(prefix)) !== -1);
+  return res;
+}
+
+export default function (options: NgAddOptions): Rule {
+  return (host: Tree) => {
+    if (isUseCNPM()) {
+      throw new Error(`Sorry, Don't use cnpm to install dependencies, pls refer to: https://ng-alain.com/docs/faq#Installation`);
+    }
+
+    const pkg = getJSON(host, `package.json`);
+    let ngCoreVersion = pkg.dependencies['@angular/core'] as string;
+    if (/^[\^|\~]/g.test(ngCoreVersion)) {
+      ngCoreVersion = ngCoreVersion.substr(1);
+    }
+    if (!ngCoreVersion.startsWith(V + '.')) {
+      throw new Error(
+        `Sorry, the current version only supports angular ${V}.x, pls downgrade the global Anguar-cli version: [yarn global add @angular/cli@${V}] (or via npm: [npm install -g @angular/cli@${V}])`,
+      );
+    }
+
+    return genRules(options);
+  };
 }

@@ -16,12 +16,12 @@ export class LoadingService implements OnDestroy {
   private n$ = new Subject();
   private loading$: Subscription;
 
-  get instance() {
+  get instance(): LoadingDefaultComponent | null {
     return this.compRef != null ? this.compRef.instance : null;
   }
 
   constructor(private overlay: Overlay, configSrv: AlainConfigService) {
-    this.cog = configSrv.merge<AlainLoadingConfig, 'loading'>('loading', {
+    this.cog = configSrv.merge('loading', {
       type: 'spin',
       text: '加载中...',
       icon: {
@@ -30,14 +30,14 @@ export class LoadingService implements OnDestroy {
         spin: true,
       },
       delay: 0,
-    });
+    })!;
     this.loading$ = this.n$
       .asObservable()
       .pipe(debounce(() => timer(this.opt!.delay)))
       .subscribe(() => this.create());
   }
 
-  private create() {
+  private create(): void {
     if (this.opt == null) return;
 
     this._close(false);
@@ -48,8 +48,7 @@ export class LoadingService implements OnDestroy {
       hasBackdrop: true,
       backdropClass: 'loading-backdrop',
     });
-    const comp = new ComponentPortal(LoadingDefaultComponent);
-    this.compRef = this._overlayRef.attach(comp);
+    this.compRef = this._overlayRef.attach(new ComponentPortal(LoadingDefaultComponent));
     Object.assign(this.instance, { options: this.opt });
     this.compRef.changeDetectorRef.markForCheck();
   }

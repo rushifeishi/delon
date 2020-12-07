@@ -2,7 +2,6 @@
 order: 1
 title: 开始使用
 type: Documents
-module: DelonFormModule
 ---
 
 @delon/form 是一个基于 [JSON Schema](http://json-schema.org/) 标准的动态构建表单。
@@ -131,8 +130,10 @@ export class HomeComponent {
 | `[disabled]` | 是否禁用状态 | `boolean` | `false` |
 | `[loading]` | 是否加载状态，当 `true` 重置按钮禁止状态，提交按钮加载状态 | `boolean` | `false` |
 | `[noColon]` | 是否不显示 `label` 后面的冒号 | `boolean` | `false` |
+| `[compact]` | 是否紧凑 | `boolean` | `false` |
 | `[cleanValue]` | 是否清理未定义 Schema 的数据 | `boolean` | `false` |
 | `(formChange)` | 数据变更时回调 | `EventEmitter<{}>` | - |
+| `(formValueChange)` | 值数据变更时回调 | `EventEmitter<SFValueChange>` | - |
 | `(formSubmit)` | 提交表单时回调 | `EventEmitter<{}>` | - |
 | `(formReset)` | 重置表单时回调 | `EventEmitter<{}>` | - |
 | `(formError)` | 表单校验结果回调 | `EventEmitter<ErrorData[]>` | - |
@@ -150,6 +151,14 @@ export class HomeComponent {
 | `[search]` | 搜索按钮文本 | `string` | `搜索` |
 | `[edit]` | 编辑按钮文本 | `string` | `保存` |
 | `[render]` | 按钮样式 | `SFRenderButton` | - |
+
+### SFValueChange
+
+| 参数 | 说明 | 类型 | 默认值 |
+|----------|-------------|------|---------|
+| `[value]` | 总是返回完整的数据 | `SFValue` | - |
+| `[path]` | 当前触发路径 | `string, null` | `null` |
+| `[pathValue]` | 当前触发路径对应值 | `SFValue` | - |
 
 ### 组件方法
 

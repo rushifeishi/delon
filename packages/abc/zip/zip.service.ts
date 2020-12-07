@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
 import { AlainConfigService, AlainZipConfig, LazyResult, LazyService } from '@delon/util';
 import { saveAs } from 'file-saver';
 import { NzSafeAny } from 'ng-zorro-antd/core/types';
@@ -11,43 +11,48 @@ declare var JSZip: any;
 export class ZipService {
   private cog: AlainZipConfig;
 
-  constructor(private http: HttpClient, private lazy: LazyService, configSrv: AlainConfigService) {
-    this.cog = configSrv.merge<AlainZipConfig, 'zip'>('zip', {
+  constructor(private http: HttpClient, private lazy: LazyService, configSrv: AlainConfigService, private ngZone: NgZone) {
+    this.cog = configSrv.merge('zip', {
       url: '//cdn.bootcss.com/jszip/3.3.0/jszip.min.js',
       utils: [],
-    });
+    })!;
   }
 
   private init(): Promise<LazyResult[]> {
     return this.lazy.load([this.cog.url!].concat(this.cog.utils!));
   }
 
-  private check(zip: any) {
+  private check(zip: any): void {
     if (!zip) throw new Error('get instance via `ZipService.create()`');
   }
 
   /** 解压 */
   read(fileOrUrl: File | string, options?: any): Promise<any> {
     return new Promise<any>((resolve, reject) => {
+      const resolveCallback = (data: NzSafeAny) => {
+        this.ngZone.run(() => resolve(data));
+      };
       this.init().then(() => {
-        // from url
-        if (typeof fileOrUrl === 'string') {
-          this.http.request('GET', fileOrUrl, { responseType: 'arraybuffer' }).subscribe(
-            (res: ArrayBuffer) => {
-              JSZip.loadAsync(res, options).then((ret: NzSafeAny) => resolve(ret));
-            },
-            (err: any) => {
-              reject(err);
-            },
-          );
-          return;
-        }
-        // from file
-        const reader: FileReader = new FileReader();
-        reader.onload = (e: any) => {
-          JSZip.loadAsync(e.target.result, options).then((ret: NzSafeAny) => resolve(ret));
-        };
-        reader.readAsBinaryString(fileOrUrl as File);
+        this.ngZone.runOutsideAngular(() => {
+          // from url
+          if (typeof fileOrUrl === 'string') {
+            this.http.request('GET', fileOrUrl, { responseType: 'arraybuffer' }).subscribe(
+              (res: ArrayBuffer) => {
+                JSZip.loadAsync(res, options).then((ret: NzSafeAny) => resolveCallback(ret));
+              },
+              (err: any) => {
+                reject(err);
+              },
+            );
+            return;
+          }
+          // from file
+          const reader: FileReader = new FileReader();
+          reader.onload = (e: any) => {
+            JSZip.loadAsync(e.target.result, options).then((ret: NzSafeAny) => resolveCallback(ret));
+          };
+          reader.readAsBinaryString(fileOrUrl as File);
+        });
       });
     });
   }

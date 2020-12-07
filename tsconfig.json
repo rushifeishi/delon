@@ -1,34 +1,35 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
-    "rootDir": ".",
+    "baseUrl": "./",
     "outDir": "./dist/out-tsc",
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
     "sourceMap": true,
     "declaration": false,
-    "emitDecoratorMetadata": true,
+    "downlevelIteration": true,
     "experimentalDecorators": true,
-    "allowSyntheticDefaultImports": true,
-    "module": "esnext",
     "moduleResolution": "node",
+    "importHelpers": true,
     "target": "es2015",
-    "typeRoots": ["node_modules/@types/!(node)"],
+    "module": "es2020",
     "lib": ["es2018", "dom"],
-    "baseUrl": "./",
     "paths": {
       "@delon/*": ["./packages/*"],
-      "@core/*": ["./src/app/core/*"]
+      "@shared": ["./src/app/shared"],
+      "@core": ["./src/app/core/index"]
     },
     "noUnusedParameters": true,
     "noUnusedLocals": true,
     "strictFunctionTypes": true,
     "strictNullChecks": true,
     "skipLibCheck": true,
-    "importHelpers": true,
     "noImplicitAny": true,
-    "noImplicitReturns": true,
     "noImplicitThis": true,
-    "noFallthroughCasesInSwitch": true,
-    "types": ["jasmine"]
+    "types": ["jasmine"],
+    "emitDecoratorMetadata": true,
+    "allowSyntheticDefaultImports": true
   },
   "exclude": ["node_modules", "tmp"]
 }

@@ -13,7 +13,7 @@ import {
   ViewEncapsulation,
 } from '@angular/core';
 import { ResponsiveService } from '@delon/theme';
-import { InputBoolean, InputNumber, isEmpty } from '@delon/util';
+import { BooleanInput, InputBoolean, InputNumber, isEmpty, NumberInput } from '@delon/util';
 import { SVContainerComponent } from './sv-container.component';
 
 const prefixCls = `sv`;
@@ -31,6 +31,9 @@ const prefixCls = `sv`;
   encapsulation: ViewEncapsulation.None,
 })
 export class SVComponent implements AfterViewInit, OnChanges {
+  static ngAcceptInputType_col: NumberInput;
+  static ngAcceptInputType_default: BooleanInput;
+
   @ViewChild('conEl', { static: false })
   private conEl: ElementRef;
   private el: HTMLElement;
@@ -40,6 +43,7 @@ export class SVComponent implements AfterViewInit, OnChanges {
 
   @Input() optional: string | TemplateRef<void>;
   @Input() optionalHelp: string | TemplateRef<void>;
+  @Input() optionalHelpColor: string;
   @Input() label: string | TemplateRef<void>;
   @Input() unit: string | TemplateRef<void>;
   @Input() @InputNumber(null) col: number;
@@ -69,7 +73,7 @@ export class SVComponent implements AfterViewInit, OnChanges {
     this.el = el.nativeElement;
   }
 
-  private setClass() {
+  private setClass(): void {
     const { el, ren, col, clsMap, type, rep } = this;
     clsMap.forEach(cls => ren.removeClass(el, cls));
     clsMap.length = 0;
@@ -80,16 +84,16 @@ export class SVComponent implements AfterViewInit, OnChanges {
     clsMap.forEach(cls => ren.addClass(el, cls));
   }
 
-  ngAfterViewInit() {
+  ngAfterViewInit(): void {
     this.setClass();
     this.checkContent();
   }
 
-  ngOnChanges() {
+  ngOnChanges(): void {
     this.setClass();
   }
 
-  checkContent() {
+  checkContent(): void {
     const { conEl } = this;
     const def = this.default;
     if (!(def != null ? def : this.parent.default)) return;

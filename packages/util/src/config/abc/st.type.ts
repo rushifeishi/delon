@@ -1,6 +1,9 @@
+import { TemplateRef, TrackByFunction } from '@angular/core';
 import { NzSafeAny } from 'ng-zorro-antd/core/types';
 import { NzDrawerOptions } from 'ng-zorro-antd/drawer';
 import { ModalOptions } from 'ng-zorro-antd/modal';
+import { PaginationItemRenderContext } from 'ng-zorro-antd/pagination';
+import { NzTableData } from 'ng-zorro-antd/table';
 
 export interface AlainSTConfig {
   /**
@@ -8,7 +11,7 @@ export interface AlainSTConfig {
    */
   pi?: number;
   /**
-   * 每页数量，当设置为 `0` 表示不分页，默认：`10`
+   * 每页数量，默认：`10`
    */
   ps?: number;
   /**
@@ -123,6 +126,14 @@ export interface AlainSTConfig {
      */
     total?: string | boolean;
     /**
+     * 用于自定义页码的结构，用法参照 Pagination 组件
+     */
+    itemRender?: TemplateRef<PaginationItemRenderContext> | null;
+    /**
+     * 当添加该属性时，显示为简单分页，默认：`false`
+     */
+    simple?: boolean;
+    /**
      * 切换分页时返回顶部，默认：`true`
      */
     toTop?: boolean;
@@ -156,6 +167,12 @@ export interface AlainSTConfig {
     separator?: string;
     /** 列名与状态间分隔符，默认：`.` */
     nameSeparator?: string;
+    /**
+     * 是否以数组的形式传递参数
+     * - `true` 表示使用 `url?sort=name.asc&sort=age.desc` 形式
+     * - `false` 表示使用 `url?sort=name.asc-age.desc` 形式
+     */
+    arrayParam?: boolean;
     /**
      * 是否全局多排序模式，默认：`true`
      * - `true` 表示所有 `st` 默认为多排序
@@ -293,8 +310,6 @@ export interface AlainSTConfig {
    * 按钮图标
    */
   btnIcon?: {
-    /** 图标类型 */
-    type: string;
     /** 图标主题风格，默认：`outline` */
     theme?: 'outline' | 'twotone' | 'fill';
     /** 是否有旋转动画，默认：`false` */
@@ -350,9 +365,24 @@ export interface AlainSTConfig {
    * Default: `100`
    */
   virtualMinBufferPx?: number;
-
+  /**
+   * The TrackByFunction to use for tracking changes
+   */
+  virtualForTrackBy?: TrackByFunction<NzTableData>;
   /**
    * Conditional expression rendering behavior, can be set to `hide` (default) or `disabled`, Default: `hide`
    */
   iifBehavior?: 'hide' | 'disabled';
+  /**
+   * The spinning indicator
+   */
+  loadingIndicator?: TemplateRef<void>;
+  /**
+   * Specifies a delay in milliseconds for loading state (prevent flush)
+   */
+  loadingDelay?: number;
+  /**
+   * Custom no result content
+   */
+  noResult?: string | TemplateRef<void>;
 }

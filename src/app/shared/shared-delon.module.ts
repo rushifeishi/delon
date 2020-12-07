@@ -8,8 +8,11 @@ import { ExceptionModule } from '@delon/abc/exception';
 import { FooterToolbarModule } from '@delon/abc/footer-toolbar';
 import { GlobalFooterModule } from '@delon/abc/global-footer';
 import { ImageModule } from '@delon/abc/image';
+import { LoadingModule } from '@delon/abc/loading';
+import { MediaModule } from '@delon/abc/media';
 import { NoticeIconModule } from '@delon/abc/notice-icon';
 import { NumberToChineseModule } from '@delon/abc/number-to-chinese';
+import { OnboardingModule } from '@delon/abc/onboarding';
 import { PageHeaderModule } from '@delon/abc/page-header';
 import { QRModule } from '@delon/abc/qr';
 import { QuickMenuModule } from '@delon/abc/quick-menu';
@@ -48,8 +51,10 @@ export const SHARED_DELON_MODULES = [
   SEModule,
   SGModule,
   ImageModule,
+  LoadingModule,
   QRModule,
   NumberToChineseModule,
+  OnboardingModule,
   ErrorCollectModule,
   ExceptionModule,
   FooterToolbarModule,
@@ -77,4 +82,5 @@ export const SHARED_DELON_MODULES = [
   NumberInfoModule,
   TrendModule,
   ReuseTabModule,
+  MediaModule,
 ];

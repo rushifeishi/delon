@@ -4,7 +4,7 @@ title: xlsx
 order: 6
 subtitle: Excel
 cols: 1
-module: XlsxModule
+module: import { XlsxModule } from '@delon/abc/xlsx';
 ---
 
 An Excel file operation based on [sheetjs](http://sheetjs.com/).
@@ -27,6 +27,7 @@ The sheetjs script file takes the form of lazy loading，you can change the defa
 |----------|-------------|------|---------|
 | `import(fileOrUrl: File | string)` | Import Excel, return JSON | `Promise<{ [key: string]: any[][] }>` | - |
 | `export(options: XlsxExportOptions)` | Export Excel | `Promise<void>` | - |
+| `numberToSchema(val: number)` | Numeric to schema name | `string` | - |
 
 ### XlsxExportOptions
 

@@ -1,4 +1,5 @@
 import { DecimalPipe } from '@angular/common';
+import { HttpParams } from '@angular/common/http';
 import { CNCurrencyPipe, DatePipe, YNPipe } from '@delon/theme';
 import { deepCopy } from '@delon/util';
 import { NzSafeAny } from 'ng-zorro-antd/core/types';
@@ -6,6 +7,7 @@ import { of, throwError } from 'rxjs';
 import { STDataSource, STDataSourceOptions } from '../st-data-source';
 import { ST_DEFULAT_CONFIG } from '../st.config';
 import { STColumnFilterMenu, STData } from '../st.interfaces';
+import { _STColumn } from '../st.types';
 
 const DEFAULT = {
   pi: 1,
@@ -15,7 +17,7 @@ const DEFAULT = {
 };
 DEFAULT.maxPi = Math.ceil(DEFAULT.total / DEFAULT.ps);
 
-function genData(count = DEFAULT.total, whetherRandom = false) {
+function genData(count: number = DEFAULT.total, whetherRandom: boolean = false): any[] {
   return Array(count)
     .fill({})
     .map((_item: any, idx: number) => {
@@ -39,23 +41,23 @@ describe('abc: table: data-souce', () => {
   let httpResponse: any;
 
   class MockHttpClient {
-    request(_method: string, _url: string, _opt: any) {
+    request(_method: string, _url: string, _opt: any): any {
       return of(httpResponse);
     }
   }
 
   class MockDomSanitizer {
-    bypassSecurityTrustHtml(val: any) {
+    bypassSecurityTrustHtml(val: any): any {
       return val;
     }
   }
   class MockNzI18nService {
-    getDateLocale() {
+    getDateLocale(): null {
       return null;
     }
   }
 
-  function genModule() {
+  function genModule(): void {
     options = {
       pi: DEFAULT.pi,
       ps: DEFAULT.ps,
@@ -64,7 +66,7 @@ describe('abc: table: data-souce', () => {
       req: deepCopy(ST_DEFULAT_CONFIG.req),
       res: deepCopy(ST_DEFULAT_CONFIG.res),
       page: deepCopy(ST_DEFULAT_CONFIG.page),
-      columns: [{ title: '', index: 'id' }],
+      columns: [{ title: '', index: 'id' }] as _STColumn[],
       paginator: true,
     };
     currentyPipe = new CNCurrencyPipe('zh-CN');
@@ -276,26 +278,26 @@ describe('abc: table: data-souce', () => {
       });
       it('should be re-name pi & ps', done => {
         options.req.reName = { pi: 'PI', ps: 'PS' };
-        let resParams: any = {};
+        let resParams: HttpParams;
         spyOn(http, 'request').and.callFake((_method: string, _url: string, opt: any) => {
           resParams = opt.params;
           return of([]);
         });
         srv.process(options).subscribe(() => {
-          expect(resParams.PI).toBe(options.pi);
-          expect(resParams.PS).toBe(options.ps);
+          expect(+resParams.get('PI')!).toBe(options.pi);
+          expect(+resParams.get('PS')!).toBe(options.ps);
           done();
         });
       });
       it('should be zero indexed of start index', done => {
         options.page.zeroIndexed = true;
-        let resParams: any = {};
+        let resParams: HttpParams;
         spyOn(http, 'request').and.callFake((_method: string, _url: string, opt: any) => {
           resParams = opt.params;
           return of([]);
         });
         srv.process(options).subscribe(() => {
-          expect(resParams.pi).toBe(options.pi - 1);
+          expect(+resParams.get('pi')!).toBe(options.pi - 1);
           done();
         });
       });
@@ -314,16 +316,16 @@ describe('abc: table: data-souce', () => {
       });
       it('should be process', done => {
         options.req.process = a => {
-          (a.params as NzSafeAny)!.PI = 2;
+          (a.params as NzSafeAny)!.pi = 2;
           return a;
         };
-        let resParams: any = {};
+        let resParams!: HttpParams;
         spyOn(http, 'request').and.callFake((_method: string, _url: string, opt: any) => {
           resParams = opt.params;
           return of([]);
         });
         srv.process(options).subscribe(() => {
-          expect(resParams.PI).toBe(2);
+          expect(resParams.get('pi')?.toString()).toBe('2');
           done();
         });
       });
@@ -331,27 +333,27 @@ describe('abc: table: data-souce', () => {
         beforeEach(() => (options.req.type = 'skip'));
         it('should be re-name skip & limit', done => {
           options.req.reName = { skip: 'SKIP', limit: 'LIMIT' };
-          let resParams: any = {};
+          let resParams: HttpParams;
           spyOn(http, 'request').and.callFake((_method: string, _url: string, opt: any) => {
             resParams = opt.params;
             return of([]);
           });
           srv.process(options).subscribe(() => {
-            expect(resParams.SKIP).toBe(0);
-            expect(resParams.LIMIT).toBe(options.ps);
+            expect(+resParams.get('SKIP')!).toBe(0);
+            expect(+resParams.get('LIMIT')!).toBe(options.ps);
             done();
           });
         });
         it('should be changed next page', done => {
           options.pi = 2;
-          let resParams: any = {};
+          let resParams: HttpParams;
           spyOn(http, 'request').and.callFake((_method: string, _url: string, opt: any) => {
             resParams = opt.params;
             return of([]);
           });
           srv.process(options).subscribe(() => {
-            expect(resParams.skip).toBe(options.ps);
-            expect(resParams.limit).toBe(options.ps);
+            expect(+resParams.get('skip')!).toBe(options.ps);
+            expect(+resParams.get('limit')!).toBe(options.ps);
             done();
           });
         });
@@ -435,7 +437,7 @@ describe('abc: table: data-souce', () => {
       });
     });
     describe('[sort]', () => {
-      let resParams: any;
+      let resParams: HttpParams;
       beforeEach(() => {
         genModule();
         options.data = '/mockurl';
@@ -451,14 +453,14 @@ describe('abc: table: data-souce', () => {
       it(`should be decremented`, done => {
         options.columns[0]._sort!.default = 'descend';
         srv.process(options).subscribe(() => {
-          expect(resParams.id).toBe('descend');
+          expect(resParams.get('id')!).toBe('descend');
           done();
         });
       });
       it(`should be incremented`, done => {
         options.columns[0]._sort!.default = 'ascend';
         srv.process(options).subscribe(() => {
-          expect(resParams.id).toBe('ascend');
+          expect(resParams.get('id')!).toBe('ascend');
           done();
         });
       });
@@ -466,7 +468,7 @@ describe('abc: table: data-souce', () => {
         options.columns[0]._sort!.default = 'ascend';
         options.columns[0]._sort!.reName = { ascend: 'A', descend: 'D' };
         srv.process(options).subscribe(() => {
-          expect(resParams.id).toBe('A');
+          expect(resParams.get('id')!).toBe('A');
           done();
         });
       });
@@ -474,7 +476,7 @@ describe('abc: table: data-souce', () => {
         options.columns[0]._sort!.default = 'ascend';
         options.columns[0]._sort!.reName = {};
         srv.process(options).subscribe(() => {
-          expect(resParams.id).toBe('ascend');
+          expect(resParams.get('id')!).toBe('ascend');
           done();
         });
       });
@@ -500,14 +502,14 @@ describe('abc: table: data-souce', () => {
         });
         it(`should be`, done => {
           srv.process(options).subscribe(() => {
-            expect(resParams.SORT).toBe('id1.descend-id2.ascend');
+            expect(resParams.get('SORT')).toBe('id1.descend-id2.ascend');
             done();
           });
         });
         it(`should be re-name`, done => {
           options.columns[0]._sort!.reName = { ascend: 'A', descend: 'D' };
           srv.process(options).subscribe(() => {
-            expect(resParams.SORT).toBe('id1.D-id2.ascend');
+            expect(resParams.get('SORT')).toBe('id1.D-id2.ascend');
             done();
           });
         });
@@ -529,14 +531,14 @@ describe('abc: table: data-souce', () => {
             },
           ];
           srv.process(options).subscribe(() => {
-            expect(resParams.SORT).toBeUndefined();
+            expect(resParams.has('SORT')).toBe(false);
             done();
           });
         });
         it(`should be used default key when invalid re-name paraments`, done => {
           options.columns[0]._sort!.reName = {};
           srv.process(options).subscribe(() => {
-            expect(resParams.SORT).toBe('id1.descend-id2.ascend');
+            expect(resParams.get('SORT')).toBe('id1.descend-id2.ascend');
             done();
           });
         });
@@ -544,7 +546,17 @@ describe('abc: table: data-souce', () => {
           options.columns[1]._sort!.tick = srv.nextSortTick;
           options.columns[0]._sort!.tick = srv.nextSortTick;
           srv.process(options).subscribe(() => {
-            expect(resParams.SORT).toBe('id2.ascend-id1.descend');
+            expect(resParams.get('SORT')).toBe('id2.ascend-id1.descend');
+            done();
+          });
+        });
+        it(`#arrayParam`, done => {
+          options.multiSort = {
+            ...options.multiSort,
+            arrayParam: true,
+          };
+          srv.process(options).subscribe(() => {
+            expect(resParams.toString()).toContain(`SORT=id1.descend&SORT=id2.ascend`);
             done();
           });
         });
@@ -554,7 +566,7 @@ describe('abc: table: data-souce', () => {
           options.columns[0]._sort!.default = 'ascend';
           options.singleSort = {};
           srv.process(options).subscribe(() => {
-            expect(resParams.sort).toBe('id.ascend');
+            expect(resParams.get('sort')).toBe('id.ascend');
             done();
           });
         });
@@ -562,14 +574,14 @@ describe('abc: table: data-souce', () => {
           options.columns[0]._sort!.default = 'ascend';
           options.singleSort = { key: 'SORT', nameSeparator: '-' };
           srv.process(options).subscribe(() => {
-            expect(resParams.SORT).toBe('id-ascend');
+            expect(resParams.get('SORT')).toBe('id-ascend');
             done();
           });
         });
       });
     });
     describe('[filter]', () => {
-      let resParams: any;
+      let resParams: HttpParams;
       beforeEach(() => {
         genModule();
         options.data = '/mockurl';
@@ -589,7 +601,7 @@ describe('abc: table: data-souce', () => {
       });
       it(`should be mulit field`, done => {
         srv.process(options).subscribe(() => {
-          expect(resParams.id).toBe('a,b');
+          expect(resParams.get('id')).toBe('a,b');
           done();
         });
       });
@@ -598,14 +610,14 @@ describe('abc: table: data-souce', () => {
           return { id: list.map(i => i.value + '1').join(',') };
         };
         srv.process(options).subscribe(() => {
-          expect(resParams.id).toBe('a1,b1');
+          expect(resParams.get('id')).toBe('a1,b1');
           done();
         });
       });
       it('should be always return first value when type with keyword', done => {
         options.columns[0].filter!.type = 'keyword';
         srv.process(options).subscribe(() => {
-          expect(resParams.id).toBe('a');
+          expect(resParams.get('id')).toBe('a');
           done();
         });
       });
@@ -775,6 +787,17 @@ describe('abc: table: data-souce', () => {
           done();
         });
       });
+      it('via enum', done => {
+        options.columns[0].type = 'enum';
+        options.columns[0].enum = {
+          1: '一',
+        };
+        srv.process(options).subscribe(res => {
+          expect(res.list[0]._values[0].text).toBe('一');
+          expect(res.list[1]._values[0].text).toBe('');
+          done();
+        });
+      });
     });
     it('#rowClassName', done => {
       options.rowClassName = () => `aaa`;
@@ -789,6 +812,16 @@ describe('abc: table: data-souce', () => {
       options.columns = [{ title: '', index: 'aa' }];
       srv.process(options).subscribe(res => {
         expect(res.list[0]._values[0].text).toBe('');
+        done();
+      });
+    });
+    it('should be throw error when is invalid data', done => {
+      options.data = [{ age: 'invalid-number' }];
+      options.columns = [{ title: '', index: 'age', type: 'number' }];
+      spyOn(console, 'error');
+      srv.process(options).subscribe(res => {
+        expect(console.error).toHaveBeenCalled();
+        expect(res.list[0]._values[0].text).toBe('INVALID DATA');
         done();
       });
     });
@@ -812,16 +845,25 @@ describe('abc: table: data-souce', () => {
       });
     });
 
+    it('should be use indexKey instead of key when not spcify key', done => {
+      options.columns = [{ title: '', index: 'a', indexKey: 'a', statistical: { type: 'sum' } }];
+      options.data = [{ a: 1 }, { a: 2 }];
+
+      srv.process(options).subscribe(res => {
+        expect(res.statistical.a.value).toBe(3);
+        done();
+      });
+    });
+
     it('should be custom function', done => {
       let callbackRawData: NzSafeAny = null;
       options.columns = [
         {
           title: '',
-          index: 'a',
           statistical: {
-            type: (values, _col, _list, rawData) => {
+            type: (_values, _col, _list, rawData) => {
               callbackRawData = rawData;
-              return { value: values[0] };
+              return { value: 10 };
             },
           },
         },
@@ -829,7 +871,7 @@ describe('abc: table: data-souce', () => {
       options.data = [{ a: 1 }, { a: 2 }];
 
       srv.process(options).subscribe(res => {
-        expect(res.statistical[0].value).toBe(1);
+        expect(res.statistical[0].value).toBe(10);
         expect(Array.isArray(callbackRawData)).toBe(true);
         done();
       });

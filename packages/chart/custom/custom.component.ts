@@ -1,3 +1,4 @@
+import { Platform } from '@angular/cdk/platform';
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -9,8 +10,8 @@ import {
   Output,
   ViewEncapsulation,
 } from '@angular/core';
-import { LooseObject } from '@antv/g2/lib/interface';
-import { AlainConfigService, InputNumber } from '@delon/util';
+import { Types } from '@antv/g2';
+import { AlainConfigService, InputNumber, NumberInput } from '@delon/util';
 import { fromEvent, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 
@@ -26,6 +27,10 @@ import { debounceTime } from 'rxjs/operators';
   encapsulation: ViewEncapsulation.None,
 })
 export class G2CustomComponent implements AfterViewInit, OnDestroy {
+  static ngAcceptInputType_delay: NumberInput;
+  static ngAcceptInputType_height: NumberInput;
+  static ngAcceptInputType_resizeTime: NumberInput;
+
   private resize$: Subscription | null = null;
 
   // #region fields
@@ -33,7 +38,7 @@ export class G2CustomComponent implements AfterViewInit, OnDestroy {
   @Input() @InputNumber() delay = 0;
   @Input() @InputNumber() height: number;
   @Input() @InputNumber() resizeTime = 0;
-  @Input() theme: string | LooseObject;
+  @Input() theme: string | Types.LooseObject;
   @Output() readonly render = new EventEmitter<ElementRef>();
   // tslint:disable-next-line:no-output-native
   @Output() readonly resize = new EventEmitter<ElementRef>();
@@ -41,17 +46,17 @@ export class G2CustomComponent implements AfterViewInit, OnDestroy {
 
   // #endregion
 
-  constructor(private el: ElementRef, configSrv: AlainConfigService) {
+  constructor(private el: ElementRef, configSrv: AlainConfigService, private platform: Platform) {
     configSrv.attachKey(this, 'chart', 'theme');
   }
 
-  private renderChart() {
+  private renderChart(): void {
     this.el.nativeElement.innerHTML = '';
     this.render.emit(this.el);
     this.installResizeEvent();
   }
 
-  private installResizeEvent() {
+  private installResizeEvent(): void {
     if (this.resizeTime <= 0 || this.resize$) return;
 
     this.resize$ = fromEvent(window, 'resize')
@@ -60,6 +65,9 @@ export class G2CustomComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
+    if (!this.platform.isBrowser) {
+      return;
+    }
     setTimeout(() => this.renderChart(), this.delay);
   }
 

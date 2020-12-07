@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, Input, ViewEncapsulation } from '@angular/core';
 import { REP_TYPE } from '@delon/theme';
-import { AlainConfigService, AlainSGConfig, InputNumber } from '@delon/util';
+import { AlainConfigService, InputNumber, NumberInput } from '@delon/util';
 
 @Component({
   selector: 'sg-container, [sg-container]',
@@ -17,20 +17,20 @@ import { AlainConfigService, AlainSGConfig, InputNumber } from '@delon/util';
   encapsulation: ViewEncapsulation.None,
 })
 export class SGContainerComponent {
-  // #region fields
+  static ngAcceptInputType_gutter: NumberInput;
+  static ngAcceptInputType_colInCon: NumberInput;
+  static ngAcceptInputType_col: NumberInput;
 
   @Input() @InputNumber() gutter: number;
   @Input('sg-container') @InputNumber(null) colInCon: REP_TYPE;
   @Input() @InputNumber(null) col: REP_TYPE;
-
-  // #endregion
 
   get marginValue(): number {
     return -(this.gutter / 2);
   }
 
   constructor(configSrv: AlainConfigService) {
-    configSrv.attach<AlainSGConfig, 'sg'>(this, 'sg', {
+    configSrv.attach(this, 'sg', {
       gutter: 32,
       col: 2,
     });

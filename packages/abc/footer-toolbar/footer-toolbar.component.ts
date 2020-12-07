@@ -11,7 +11,7 @@ import {
   TemplateRef,
   ViewEncapsulation,
 } from '@angular/core';
-import { InputBoolean } from '@delon/util';
+import { BooleanInput, InputBoolean } from '@delon/util';
 
 const CLSBODY = 'footer-toolbar__body';
 
@@ -24,21 +24,23 @@ const CLSBODY = 'footer-toolbar__body';
   encapsulation: ViewEncapsulation.None,
 })
 export class FooterToolbarComponent implements OnInit, OnDestroy {
+  static ngAcceptInputType_errorCollect: BooleanInput;
+
   @Input() @InputBoolean() errorCollect = false;
   @Input() extra: string | TemplateRef<void>;
 
   constructor(private el: ElementRef, private renderer: Renderer2, @Inject(DOCUMENT) private doc: any) {}
 
-  private get bodyCls() {
-    return this.doc.querySelector('body').classList;
+  private get bodyCls(): DOMTokenList {
+    return (this.doc.querySelector('body') as HTMLElement).classList;
   }
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.renderer.addClass(this.el.nativeElement, 'footer-toolbar');
     this.bodyCls.add(CLSBODY);
   }
 
-  ngOnDestroy() {
+  ngOnDestroy(): void {
     this.bodyCls.remove(CLSBODY);
   }
 }

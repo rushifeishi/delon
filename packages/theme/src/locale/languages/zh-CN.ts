@@ -16,7 +16,7 @@ export default {
     close: '关闭标签',
     closeOther: '关闭其它标签',
     closeRight: '关闭右侧标签',
-    clear: '清空',
+    refresh: '刷新',
   },
   tagSelect: {
     expand: '展开',
@@ -74,5 +74,11 @@ export default {
       formatExclusiveMinimum: `formatExclusiveMinimum 应当是布尔值`,
       if: `应当匹配模式 "{failingKeyword}"`,
     },
+  },
+  onboarding: {
+    skip: `跳过`,
+    prev: `上一项`,
+    next: `下一项`,
+    done: `完成`,
   },
 } as FullLocaleData;

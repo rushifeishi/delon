@@ -1,8 +1,10 @@
 import { DOCUMENT } from '@angular/common';
 import { Inject, Injectable } from '@angular/core';
+import { deepCopy } from '@delon/util';
 import sdk from '@stackblitz/sdk';
 import { getParameters } from 'codesandbox/lib/api/define';
 import * as pkg from '../../../../package.json';
+import { AppService } from '../app.service';
 import angularJSON from './files/angular.json';
 import appModuleTS from './files/app.module';
 import delonABCModuleTS from './files/delon-abc.module';
@@ -14,49 +16,67 @@ import mainTS from './files/main';
 import nzZorroAntdModuleTS from './files/ng-zorro-antd.module';
 import polyfillTS from './files/polyfill';
 import startupServiceTS from './files/startup.service';
+import tsconfigJSON from './files/tsconfig.json';
 
 @Injectable({ providedIn: 'root' })
 export class CodeService {
   private document: Document;
 
-  private get dependencies() {
-    const NGALAIN_VERSION = `~${pkg.version}`;
-    return {
-      '@angular/animations': '^9.0.0',
-      '@angular/cdk': '9.2.1',
-      '@angular/common': '^9.0.0',
-      '@angular/compiler': '^9.0.0',
-      '@angular/core': '^9.0.0',
-      '@angular/forms': '^9.0.0',
-      '@angular/platform-browser': '^9.0.0',
-      '@angular/platform-browser-dynamic': '^9.0.0',
-      '@angular/router': '^9.0.0',
-      '@ant-design/icons-angular': '9.0.1',
-      'core-js': '3.6.4',
-      rxjs: '6.5.4',
-      tslib: '1.11.1',
-      'zone.js': '0.10.2',
-      '@antv/g2': '*',
-      '@antv/data-set': '*',
-      'date-fns': '*',
-      'file-saver': '^1.3.3',
-      'ngx-countdown': '*',
-      'ng-zorro-antd': '*',
-      '@delon/theme': NGALAIN_VERSION,
-      '@delon/abc': NGALAIN_VERSION,
-      '@delon/chart': NGALAIN_VERSION,
-      '@delon/acl': NGALAIN_VERSION,
-      '@delon/auth': NGALAIN_VERSION,
-      '@delon/cache': NGALAIN_VERSION,
-      '@delon/mock': NGALAIN_VERSION,
-      '@delon/form': NGALAIN_VERSION,
-      '@delon/util': NGALAIN_VERSION,
-      extend: '*',
-      qrious: '*',
-    };
+  private get dependencies(): { [key: string]: string } {
+    const res: { [key: string]: string } = {};
+    [
+      '@angular/animations',
+      '@angular/compiler',
+      '@angular/common',
+      '@angular/core',
+      '@angular/forms',
+      '@angular/platform-browser',
+      '@angular/platform-browser-dynamic',
+      '@angular/router',
+      '@ant-design/icons-angular@^10.0.0-beta.0',
+      'core-js@^3.6.4',
+      'rxjs',
+      'tslib',
+      'zone.js',
+      '@antv/g2',
+      '@antv/data-set',
+      'date-fns@^2.10.0',
+      'file-saver',
+      'ngx-countdown',
+      'extend',
+      'qrious',
+      '@angular/cdk@^10.0.2',
+      'ng-zorro-antd',
+      '@delon/theme',
+      '@delon/abc',
+      '@delon/chart',
+      '@delon/acl',
+      '@delon/auth',
+      '@delon/cache',
+      '@delon/mock',
+      '@delon/form',
+      '@delon/util',
+    ].forEach(key => {
+      const includeVersion = key.indexOf(`@^`);
+      if (includeVersion !== -1) {
+        res[key.substr(0, includeVersion)] = key.substr(includeVersion + 1);
+        return;
+      }
+      const version = key.startsWith('@delon')
+        ? `~${pkg.version}`
+        : ((pkg.dependencies || pkg.devDependencies) as {
+            [key: string]: string;
+          })[key];
+      res[key] = version || '*';
+    });
+    return res;
   }
 
-  constructor(@Inject(DOCUMENT) document: any) {
+  private get themePath(): string {
+    return `node_modules/@delon/theme/${this.appSrv.theme}.css`;
+  }
+
+  constructor(private appSrv: AppService, @Inject(DOCUMENT) document: any) {
     this.document = document;
   }
 
@@ -65,10 +85,13 @@ export class CodeService {
   }
 
   private get genMock(): { [key: string]: string } {
-    return { '_mock/user.ts': require('!!raw-loader!../../../../_mock/user.ts').default, '_mock/index.ts': `export * from './user';` };
+    return {
+      '_mock/user.ts': require('!!raw-loader!../../../../_mock/user.ts').default,
+      '_mock/index.ts': `export * from './user';`,
+    };
   }
 
-  private parseCode(code: string) {
+  private parseCode(code: string): { selector: string; componentName: string; html: string } {
     let selector = '';
     let componentName = '';
     const selectorRe = /selector:[ ]?(['|"|`])([^'"`]+)/g.exec(code);
@@ -90,9 +113,10 @@ export class CodeService {
     };
   }
 
-  openOnStackBlitz(appComponentCode: string) {
+  openOnStackBlitz(appComponentCode: string): void {
     const res = this.parseCode(appComponentCode);
-    console.log(this.dependencies);
+    const json = deepCopy(angularJSON);
+    json.projects.demo.architect.build.options.styles.splice(0, 0, this.themePath);
     sdk.openProject(
       {
         title: 'NG-ALAIN',
@@ -100,7 +124,8 @@ export class CodeService {
         tags: ['ng-alain', '@delon', 'NG-ZORRO', 'ng-zorro-antd', 'Ant Design', 'Angular', 'ng'],
         dependencies: this.dependencies,
         files: {
-          'angular.json': `${JSON.stringify(angularJSON, null, 2)}`,
+          'angular.json': `${JSON.stringify(json, null, 2)}`,
+          'tsconfig.json': `${JSON.stringify(tsconfigJSON, null, 2)}`,
           'src/environments/environment.ts': environmentTS,
           'src/index.html': res.html,
           'src/main.ts': mainTS,
@@ -123,9 +148,11 @@ export class CodeService {
     );
   }
 
-  openOnCodeSandbox(appComponentCode: string) {
+  openOnCodeSandbox(appComponentCode: string): void {
     const res = this.parseCode(appComponentCode);
     const mockObj = this.genMock;
+    const json = deepCopy(dotAngularCliJSON);
+    json.apps[0].styles.splice(0, 0, this.themePath);
     const parameters = getParameters({
       files: {
         'package.json': {
@@ -139,9 +166,13 @@ export class CodeService {
           isBinary: false,
         },
         '.angular-cli.json': {
-          content: dotAngularCliJSON,
+          content: `${JSON.stringify(json, null, 2)}`,
           isBinary: false,
         },
+        // 'tsconfig.json': {
+        //   content: `${JSON.stringify(tsconfigJSON, null, 2)}`,
+        //   isBinary: false,
+        // },
         'src/environments/environment.ts': {
           content: environmentTS,
           isBinary: false,

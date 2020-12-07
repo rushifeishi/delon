@@ -4,7 +4,7 @@ order: 1
 title: reuse-tab
 subtitle: Reuse Route Tab
 cols: 1
-module: ReuseTabModule
+module: import { ReuseTabModule } from '@delon/abc/reuse-tab';
 ---
 
 Reuse route tab are extremely common for admin interfaces, and the problem of component data is not lost when switching routes.
@@ -17,17 +17,17 @@ The default `ReuseTabModule` does not register `RouteReuseStrategy`. If you need
 
 **Register**
 
-> How to use in ng-alain, pls refer to [global-config.module.ts](https://github.com/ng-alain/ng-alain/blob/master/src/app/global-config.module.ts#L22).
+> How to use in ng-alain, pls refer to [global-config.module.ts](https://github.com/ng-alain/ng-alain/blob/master/src/app/global-config.module.ts#L32).
 
 ```ts
 // global-config.module.ts
-providers: [
-  {
-    provide: RouteReuseStrategy,
-    useClass: ReuseTabStrategy,
-    deps: [ReuseTabService],
-  }
-]
+import { RouteReuseStrategy } from '@angular/router';
+import { ReuseTabService, ReuseTabStrategy } from '@delon/abc/reuse-tab';
+alainProvides.push({
+  provide: RouteReuseStrategy,
+  useClass: ReuseTabStrategy,
+  deps: [ReuseTabService],
+} as any);
 ```
 
 **Add Component**
@@ -36,10 +36,12 @@ providers: [
 
 ```html
 <section class="alain-default__content">
-  <reuse-tab></reuse-tab>
-  <router-outlet></router-outlet>
+  <reuse-tab #reuseTab></reuse-tab>
+  <router-outlet (activate)="reuseTab.activate($event)"></router-outlet>
 </section>
 ```
+
+> **Note: If you do not specify the `(activate)` event, you cannot refresh current tab when uncached.**
 
 ## Matching Mode
 
@@ -112,11 +114,18 @@ export class DemoReuseTabEditComponent implements OnInit {
 
 Route reusing does not touch the Angular component lifecycle hooks (eg: `ngOnInit`, etc.), but often requires data to be refreshed during the reuse process, so two new lifecycle hooks are provided to temporarily resolve such problems.
 
-**_onReuseInit()**
+**OnReuseInit** Interface
 
-Triggered when the current route is in the reusing process.
+- `_onReuseInit(type?: ReuseHookOnReuseInitType): void;`
 
-**_onReuseDestroy()**
+Triggered when the current route is in the reusing process, The values of `type` are:
+
+-`init` when routing process
+-`refresh` when refresh action via tab
+
+**OnReuseDestroy** Interface
+
+- `_onReuseDestroy(): void;`
 
 Triggered when the current route allows reusing and leave route.
 
@@ -125,8 +134,8 @@ A simple example:
 ```ts
 @Component()
 export class DemoComponent {
-  _onReuseInit() {
-    console.log('_onReuseInit');
+  _onReuseInit(type: ReuseHookOnReuseInitType) {
+    console.log('_onReuseInit', type);
   }
   _onReuseDestroy() {
     console.log('_onReuseDestroy');
@@ -194,13 +203,13 @@ Turning on `keepingScroll` will restore the previous scrollbar position after re
 | `[keepingScrollContainer]` | Keep the scroll bar container | `string | Element` | `window` |
 | `[excludes]` | Exclusion rules, limited by `mode=URL` | `RegExp[]` | - |
 | `[allowClose]` | Whether to allow close tab | `boolean` | `true` |
-| `[showCurrent]` | Always show current page | `boolean` | `true` |
 | `[customContextMenu]` | Custom context click menu | `ReuseCustomContextMenu[]` | - |
 | `[tabBarExtraContent]` | Extra content in tab bar | `TemplateRef<void>` | - |
 | `[tabBarStyle]` | Tab bar style object | `object` | - |
 | `[tabBarGutter]` | The gap between tabs | `number` | - |
 | `[tabType]` | Basic style of tabs | `line, card` | `line` |
 | `[tabMaxWidth]` | The maximum width of each tab, unit: `px` | `number` | - |
+| `[routeParamMatchMode]` | Match the pattern when routing parameters are included, for example:`/view/:id`<br> - `strict` Strict mode `/view/1`, `/view/2` Different pages<br> - `loose` Loose mode `/view/1`, `/view/2` Same page and only one tab of component | `strict,loose` | `strict` |
 | `(close)` | Close callback event | `EventEmitter` | - |
 | `(change)` | Callback when switching | `EventEmitter` | - |
 

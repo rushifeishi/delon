@@ -1,4 +1,4 @@
-import { HttpResponse } from '@angular/common/http';
+import { HttpParams, HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController, TestRequest } from '@angular/common/http/testing';
 import { Type } from '@angular/core';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
@@ -14,7 +14,7 @@ describe('theme: http.client', () => {
   const PARAMS: { [key: string]: string } = { a: `1` };
   const BODY = 'body data';
 
-  function createModule(config?: AlainThemeHttpClientConfig) {
+  function createModule(config?: AlainThemeHttpClientConfig): void {
     const providers: any[] = [_HttpClient];
     if (config) {
       providers.push({ provide: ALAIN_CONFIG, useValue: { themeHttp: config } });
@@ -63,6 +63,15 @@ describe('theme: http.client', () => {
           if (v instanceof Date) v = v.valueOf();
           expect(ret.request.params.get(key)).toBe(v, `param "${key}" muse be "${v}"`);
         }
+        ret.flush(OK);
+      });
+      it('should be ingore process when params is HttpParams', done => {
+        http.get(URL, new HttpParams({ fromObject: { a: 'aa' } })).subscribe(res => {
+          expect(res).toBe(OK);
+          done();
+        });
+        const ret = backend.expectOne(() => true) as TestRequest;
+        expect(ret.request.params.get('a')).toBe('aa');
         ret.flush(OK);
       });
     });

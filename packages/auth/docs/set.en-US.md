@@ -2,7 +2,7 @@
 order: 15
 title: 
   zh-CN: 存储Token
-  en-Us: Store Token
+  en-US: Store Token
 type: Documents
 ---
 
@@ -56,3 +56,7 @@ Contains three storage types:
 ### MemoryStore
 
 Memory storage, **lost after closing the browser tab**.
+
+### CookieStorageStore
+
+`cookie` storage, muse be install [js-cookie](https://github.com/js-cookie/js-cookie) libary and import `"node_modules/js-cookie/dist/js.cookie.js"` in `angular.json`.

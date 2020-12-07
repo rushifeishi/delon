@@ -1,15 +1,15 @@
+// tslint:disable: deprecation
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController, TestRequest } from '@angular/common/http/testing';
-import { Component, DebugElement, ViewChild } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Component, DebugElement } from '@angular/core';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { _HttpClient } from '@delon/theme';
 import * as fs from 'file-saver';
 import { NzSafeAny } from 'ng-zorro-antd/core/types';
-import { DownFileDirective } from './down-file.directive';
 import { DownFileModule } from './down-file.module';
 
-function genFile(isRealFile = true): Blob {
+function genFile(isRealFile: boolean = true): Blob {
   const blob = new Blob([
     isRealFile ? `iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==` : '',
   ]);
@@ -22,7 +22,7 @@ describe('abc: down-file', () => {
   let context: TestComponent;
   let httpBed: HttpTestingController;
 
-  function createComp() {
+  function createComp(): void {
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule, DownFileModule],
       declarations: [TestComponent],
@@ -130,6 +130,25 @@ describe('abc: down-file', () => {
       const ret = httpBed.expectOne(req => req.url.startsWith('/')) as TestRequest;
       expect(ret.request.body.a).toBe(1);
     });
+
+    describe('#pre', () => {
+      it('should be download when return true', fakeAsync(() => {
+        const btn = dl.query(By.css('#down-xlsx')).nativeElement as HTMLButtonElement;
+        context.pre = () => Promise.resolve(true);
+        fixture.detectChanges();
+        btn.click();
+        tick();
+        fixture.detectChanges();
+        expect(btn.classList).toContain(`down-file__disabled`);
+      }));
+      it('should be cannot download when return false', () => {
+        const btn = dl.query(By.css('#down-xlsx')).nativeElement as HTMLButtonElement;
+        context.pre = () => Promise.resolve(false);
+        fixture.detectChanges();
+        btn.click();
+        expect(btn.classList).not.toContain(`down-file__disabled`);
+      });
+    });
   });
 
   it('should be using content-disposition filename', () => {
@@ -151,7 +170,12 @@ describe('abc: down-file', () => {
   });
 
   it('should be down-file__not-support when not supoort fileSaver', () => {
-    spyOn(window, 'Blob').and.callThrough();
+    class MockBlob {
+      constructor() {
+        throw new Error('');
+      }
+    }
+    spyOn(window, 'Blob').and.callFake(() => new MockBlob() as NzSafeAny);
     createComp();
     fixture.detectChanges();
     const el = dl.query(By.css('#down-xlsx')).nativeElement as HTMLButtonElement;
@@ -171,6 +195,7 @@ describe('abc: down-file', () => {
       [http-method]="method"
       http-url="/demo.{{ i }}"
       [file-name]="fileName"
+      [pre]="pre"
       (success)="success()"
       (error)="error()"
     >
@@ -179,7 +204,6 @@ describe('abc: down-file', () => {
   `,
 })
 class TestComponent {
-  @ViewChild(DownFileDirective, { static: true }) comp: DownFileDirective;
   fileTypes = ['xlsx', 'docx', 'pptx', 'pdf'];
 
   data: any = {
@@ -195,7 +219,9 @@ class TestComponent {
 
   fileName: string | ((rep: HttpResponse<Blob>) => string) | null = 'demo中文';
 
-  success() {}
+  pre: (ev: MouseEvent) => Promise<boolean>;
 
-  error() {}
+  success(): void {}
+
+  error(): void {}
 }

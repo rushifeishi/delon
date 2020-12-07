@@ -4,7 +4,7 @@ title: se
 subtitle: 编辑
 cols: 1
 order: 3
-module: SEModule
+module: import { SEModule } from '@delon/abc/se';
 ---
 
 简化表单HTML模板的高阶组件，并进一步优化了一些细节：
@@ -44,8 +44,10 @@ module: SEModule
 | `[nzLayout]` | 表单布局，当 `inline` 时强制大小为 `compact` | `'horizontal','vertical','inline'` | `'horizontal'` | ✅ |
 | `[size]` | 大小 `compact` 紧凑型，强制忽略 `error`、`extra` 展示 | `'default','compact'` | `'default'` | ✅ |
 | `[firstVisual]` | 是否立即呈现错误视觉 | `boolean` | `false` | ✅ |
+| `[ingoreDirty]` | 是否忽略 `dirty` 校验 | `boolean` | `false` | ✅ |
 | `[line]` | 分隔线 | `boolean` | `false` |  |
 | `[title]` | 标题 | `string,TemplateRef<void>` | - |  |
+| `[errors]` | 批量修改 `se` 错误消息描述 | `SEErrorRefresh[]` | - |  |
 
 ### se
 
@@ -56,6 +58,7 @@ module: SEModule
 | `[labelWidth]` | 标签文本宽度，单位：`px`（继承于 `se-container`） | `number` | - |
 | `[optional]` | 标签可选信息 | `string, TemplateRef<void>` | - |
 | `[optionalHelp]` | 标签可选帮助 | `string, TemplateRef<void>` | - |
+| `[optionalHelpColor]` | 标签可选帮助背景颜色	 | `string` | - |
 | `[error]` | 错误描述 | `string, TemplateRef<void>, { [key: string]: string, TemplateRef<void> }` | - |
 | `[extra]` | 额外提示信息 | `string, TemplateRef<void>` | - |
 | `[required]` | 是否必填项标识符，若不设置自动根据表单元素是否有 `RequiredValidator` 校验来设置值 | `string` | - |

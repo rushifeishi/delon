@@ -1,3 +1,6 @@
+import { TemplateRef } from '@angular/core';
+import { NzSafeAny } from 'ng-zorro-antd/core/types';
+import { NzOptionComponent } from 'ng-zorro-antd/select';
 import { Observable } from 'rxjs';
 import { SFValue } from '../../interface';
 import { SFSchemaEnum, SFSchemaEnumType } from '../../schema';
@@ -30,6 +33,11 @@ export interface SFSelectWidgetSchema extends SFUISchemaItem {
    * 支持清除，默认：`false`
    */
   allowClear?: boolean;
+
+  /**
+   * 是否无边框，默认：`false`
+   */
+  borderless?: boolean;
 
   /**
    * 默认获取焦点，默认：`false`
@@ -92,9 +100,54 @@ export interface SFSelectWidgetSchema extends SFUISchemaItem {
   maxTagCount?: number;
 
   /**
+   * 自定义选择框的Template内容
+   */
+  customTemplate?: TemplateRef<{ $implicit: NzOptionComponent }>;
+
+  /**
+   * 自定义的选择框后缀图标
+   */
+  suffixIcon?: TemplateRef<any> | string;
+
+  /**
+   * 自定义的多选框清除图标
+   */
+  removeIcon?: TemplateRef<any>;
+
+  /**
+   * 自定义的多选框清空图标
+   */
+  clearIcon?: TemplateRef<any>;
+
+  /**
+   * 自定义当前选中的条目图标
+   */
+  menuItemSelectedIcon?: TemplateRef<any>;
+
+  /**
+   * 隐藏 tag 时显示的内容
+   */
+  maxTagPlaceholder?: TemplateRef<{ $implicit: any[] }>;
+
+  /**
+   * 下拉菜单中每个 Option 的高度，默认：`32`
+   */
+  optionHeightPx?: number;
+
+  /**
+   * 下拉菜单中最多展示的 Option 个数，超出部分滚动，默认：`8`
+   */
+  optionOverflowSize?: number;
+
+  /**
+   * 自由扩展
+   */
+  dropdownRender?: TemplateRef<NzSafeAny>;
+
+  /**
    * 选中的 `nz-option` 发生变化时，调用此函数
    */
-  change?: (ngModel: SFValue | SFValue[]) => void;
+  change?: (ngModel: SFValue | SFValue[], orgData: SFSchemaEnum | SFSchemaEnum[]) => void;
 
   /**
    * 下拉菜单打开关闭回调函数

@@ -16,7 +16,7 @@ export default {
     close: 'タブを閉じる',
     closeOther: '他のタブを閉じる',
     closeRight: '右のタブを閉じる',
-    clear: 'クリア',
+    refresh: 'リフレッシュ',
   },
   tagSelect: {
     expand: '展開する',
@@ -74,5 +74,11 @@ export default {
       formatExclusiveMinimum: `formatExclusiveMaximum は真偽値である必要があります`,
       if: `パターンと一致する必要があります: "{failingKeyword}" `,
     },
+  },
+  onboarding: {
+    skip: `スキップ`,
+    prev: `前へ`,
+    next: `次`,
+    done: `できた`,
   },
 } as FullLocaleData;

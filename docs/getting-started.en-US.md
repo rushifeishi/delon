@@ -27,13 +27,22 @@ You will need [node](http://nodejs.org/) and [git](https://git-scm.com/). The pr
 
 ### CLI (Recommend)
 
-Please make sure global Angular Cli is latest version via `ng version` command (Currently <img src="https://img.shields.io/npm/v/@angular/cli.svg?style= Flat-square" alt="npm">), please refer to [CLI Command Reference](https://angular.cn/cli) for how to upgrade.
+Please make sure global Angular Cli is `9.x` version via `ng version` command, please refer to [CLI Command Reference](https://angular.io/cli) for how to upgrade.
 
 ```bash
-ng new my-project --style less
+# Install the 9.x version of the global Angular Cli version
+# Via yarn
+yarn global add @angular/cli@9.x
+# Or via npm
+# npm install -g @angular/cli@9.x
+```
+
+```bash
+ng new my-project --style less --routing
 cd my-project
 ng add ng-alain
 npm start
+# Or use HMR mode by: npm run hmr
 ```
 
 > Please refer to [Schematics](/cli) for more details.
@@ -45,6 +54,7 @@ git clone --depth=1 https://github.com/ng-alain/ng-alain.git my-project
 cd my-project
 yarn
 npm start
+# Or use HMR mode by: npm run hmr
 ```
 
 > Note: Installing with the CLI is a clean scaffolding; using clone the git repository include all example pages.
@@ -88,7 +98,7 @@ NG-ALAIN is a standard Angular CLI project that includes common routes for admin
 npm start
 ```
 
-This will automatically open http://localhost:8000. If you see the following page then you have succeeded.
+This will automatically open [http://localhost:4200](http://localhost:4200). If you see the following page then you have succeeded.
 
 ![](./assets/screenshot/desktop.png | width=700)
 

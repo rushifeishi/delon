@@ -15,12 +15,12 @@ export class LodopService implements OnDestroy {
   private printBuffer: any[] = [];
 
   constructor(private scriptSrv: LazyService, configSrv: AlainConfigService) {
-    this.defaultConfig = configSrv.merge<AlainLodopConfig, 'lodop'>('lodop', {
+    this.defaultConfig = configSrv.merge('lodop', {
       url: '//localhost:8443/CLodopfuncs.js',
       name: 'CLODOP',
       companyName: '',
       checkMaxCount: 100,
-    });
+    })!;
     this.cog = this.defaultConfig;
   }
 
@@ -29,7 +29,7 @@ export class LodopService implements OnDestroy {
    *
    * **注：**重新设置会倒置重新加载脚本资源
    */
-  get cog() {
+  get cog(): AlainLodopConfig {
     return this._cog;
   }
   set cog(value: AlainLodopConfig) {
@@ -65,7 +65,7 @@ export class LodopService implements OnDestroy {
     return ret;
   }
 
-  private check() {
+  private check(): void {
     if (!this._lodop) throw new Error(`请务必先调用 lodop 获取对象`);
   }
 
@@ -115,7 +115,7 @@ export class LodopService implements OnDestroy {
   }
 
   /** 重置 lodop 对象 */
-  reset() {
+  reset(): void {
     this._lodop = null;
     this.pending = false;
     this.request();
@@ -128,11 +128,11 @@ export class LodopService implements OnDestroy {
    *
    * @param code 代码
    * @param contextObj 动态参数上下文对象
-   * @param parser 自定义解析表达式，默认：`/LODOP\.([^(]+)\(([^\n]+)\);/i`
+   * @param parser 自定义解析表达式，默认：`/LODOP\.([^(]+)\(([^\n]+)?\);/i`
    */
   attachCode(code: string, contextObj?: NzSafeAny, parser?: RegExp): void {
     this.check();
-    if (!parser) parser = /LODOP\.([^(]+)\(([^\n]+)\);/i;
+    if (!parser) parser = /LODOP\.([^(]+)\(([^\n]+)?\);/i;
     code.split('\n').forEach(line => {
       const res = parser!.exec(line.trim());
       if (!res) return;
@@ -173,7 +173,7 @@ export class LodopService implements OnDestroy {
       };
     });
   }
-  private printDo() {
+  private printDo(): void {
     const data = this.printBuffer.shift();
     if (!data) return;
     this.attachCode(data.code, data.item, data.parser);
@@ -195,7 +195,7 @@ export class LodopService implements OnDestroy {
    *
    * @param code 代码
    * @param contextObj 动态参数上下文对象
-   * @param parser 自定义解析表达式，默认：`/LODOP\.([^(]+)\(([^\n]+)\);/i`
+   * @param parser 自定义解析表达式，默认：`/LODOP\.([^(]+)\(([^\n]+)?\);/i`
    */
   print(code: string, contextObj: {} | Array<{}>, parser?: RegExp): void {
     this.check();

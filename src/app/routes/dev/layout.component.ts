@@ -1,4 +1,5 @@
 import { Component, HostBinding, Inject, OnInit } from '@angular/core';
+// import { Router } from '@angular/router';
 import { ALAIN_I18N_TOKEN, Menu, MenuService, SettingsService } from '@delon/theme';
 import { NzIconService } from 'ng-zorro-antd/icon';
 import { NzMessageService } from 'ng-zorro-antd/message';
@@ -23,8 +24,8 @@ import {
   SettingOutline,
   UserOutline,
 } from '@ant-design/icons-angular/icons';
+import { I18NService, LangType } from '@core';
 import { ReuseCustomContextMenu } from '@delon/abc/reuse-tab';
-import { I18NService, LangType } from 'app/core/i18n/service';
 
 const ICONS = [
   MenuFoldOutline,
@@ -57,15 +58,15 @@ const ICONS = [
 })
 export class DevLayoutComponent implements OnInit {
   @HostBinding('class.alain-default__fixed')
-  get isFixed() {
+  get isFixed(): boolean {
     return this.settings.layout.fixed;
   }
   @HostBinding('class.alain-default__boxed')
-  get isBoxed() {
+  get isBoxed(): boolean {
     return this.settings.layout.boxed;
   }
   @HostBinding('class.alain-default__collapsed')
-  get isCollapsed() {
+  get isCollapsed(): boolean {
     return this.settings.layout.collapsed;
   }
 
@@ -84,6 +85,12 @@ export class DevLayoutComponent implements OnInit {
           badge: 5,
           disabled: true,
         },
+        { text: '测试view1-id', link: '/dev/view/1' },
+        { text: '测试view2-id', link: '/dev/view/2' },
+        { text: 'lazy测试1', link: '/dev/lazy/p1' },
+        { text: 'lazy测试2', link: '/dev/lazy/p2' },
+        { text: 'lazy测试view1-id', link: '/dev/lazy/1/view' },
+        { text: 'lazy测试view2-id', link: '/dev/lazy/2/view' },
         {
           text: 'Level1',
           link: '#',
@@ -141,16 +148,32 @@ export class DevLayoutComponent implements OnInit {
     private menuSrv: MenuService,
     public settings: SettingsService,
     public msgSrv: NzMessageService,
+    // private router: Router,
     @Inject(ALAIN_I18N_TOKEN) private i18n: I18NService,
   ) {
     iconSrv.addIcon(...ICONS);
+    // this.testReuse();
   }
 
-  toggleCollapsedSideabar() {
+  // private testReuse(): void {
+  //   const urls = ['/dev/l2', '/dev/l3', '/dev/l4', '/dev/l5', '/dev/l6'];
+  //   const fn = (pos: number) => {
+  //     if (pos >= urls.length) return;
+
+  //     setTimeout(() => {
+  //       console.log('--------------------');
+  //       this.router.navigateByUrl(urls[pos]);
+  //       fn(++pos);
+  //     }, 300);
+  //   };
+  //   fn(0);
+  // }
+
+  toggleCollapsedSideabar(): void {
     this.settings.setLayout('collapsed', !this.settings.layout.collapsed);
   }
 
-  toggleLang() {
+  toggleLang(): void {
     this.lang = this.lang === 'zh-CN' ? 'en-US' : 'zh-CN';
     this.i18n.use(this.lang);
   }

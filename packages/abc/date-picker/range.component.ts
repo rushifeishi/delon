@@ -3,7 +3,6 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { DomSanitizer } from '@angular/platform-browser';
 import {
   AlainConfigService,
-  AlainDateRangePickerConfig,
   AlainDateRangePickerShortcut,
   AlainDateRangePickerShortcutItem,
   deepMergeKey,
@@ -45,7 +44,7 @@ export class RangePickerComponent implements ControlValueAccessor {
     });
     this._shortcut = item;
   }
-  get shortcut() {
+  get shortcut(): AlainDateRangePickerShortcut | null {
     return this._shortcut;
   }
   @Output() readonly ngModelEndChange = new EventEmitter<Date>();
@@ -80,7 +79,7 @@ export class RangePickerComponent implements ControlValueAccessor {
   // #endregion
 
   constructor(private dom: DomSanitizer, configSrv: AlainConfigService) {
-    const cog = configSrv.merge<AlainDateRangePickerConfig, 'dataRange'>('dataRange', {
+    const cog = configSrv.merge('dataRange', {
       nzFormat: 'yyyy-MM-dd',
       nzAllowClear: true,
       nzAutoFocus: false,
@@ -120,24 +119,24 @@ export class RangePickerComponent implements ControlValueAccessor {
           },
         ],
       },
-    });
+    })!;
     this.defaultShortcuts = { ...cog.shortcuts } as AlainDateRangePickerShortcut;
     Object.assign(this, cog);
   }
 
-  _nzOnOpenChange(e: any) {
+  _nzOnOpenChange(e: any): void {
     this.nzOnOpenChange.emit(e);
   }
 
-  _nzOnPanelChange(e: any) {
+  _nzOnPanelChange(e: any): void {
     this.nzOnPanelChange.emit(e);
   }
 
-  _nzOnOk(e: any) {
+  _nzOnOk(e: any): void {
     this.nzOnOk.emit(e);
   }
 
-  valueChange(e: [Date, Date]) {
+  valueChange(e: [Date, Date]): void {
     e = fixEndTimeOfRange(e);
     this.onChangeFn(e[0]);
     this.ngModelEnd = e[1];
@@ -160,7 +159,7 @@ export class RangePickerComponent implements ControlValueAccessor {
     this.nzDisabled = disabled;
   }
 
-  clickShortcut(item: AlainDateRangePickerShortcutItem) {
+  clickShortcut(item: AlainDateRangePickerShortcutItem): void {
     this.value = item.fn(this.value as any);
     this.valueChange(this.value as [Date, Date]);
     if (this._shortcut.closed) {

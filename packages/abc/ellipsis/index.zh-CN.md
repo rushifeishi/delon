@@ -3,12 +3,14 @@ type: Layout
 title: ellipsis
 subtitle: 文本自动省略号
 cols: 1
-module: EllipsisModule
+module: import { EllipsisModule } from '@delon/abc/ellipsis';
 ---
 
 文本过长自动处理省略号，支持按照文本长度和最大行数两种方式截取。
 
 ## API
+
+### ellipsis
 
 | 成员 | 说明 | 类型 | 默认值 |
 |----|----|----|-----|

@@ -20,9 +20,9 @@ describe('form: component', () => {
   let context: TestFormComponent;
   let page: SFPage;
 
-  function genModule(options: { acl?: boolean; i18n?: boolean } = {}) {
+  function genModule(options: { acl?: boolean; i18n?: boolean } = {}): void {
     options = { acl: false, i18n: false, ...options };
-    const imports = [NoopAnimationsModule, DelonFormModule.forRoot()];
+    const imports = [NoopAnimationsModule, DelonFormModule.forRoot(), AlainThemeModule.forRoot()];
     if (options.i18n) {
       imports.push(AlainThemeModule.forRoot());
     }
@@ -35,7 +35,7 @@ describe('form: component', () => {
     });
   }
 
-  function createComp() {
+  function createComp(): void {
     fixture.detectChanges();
     page = new SFPage(context.comp);
     page.prop(dl, context, fixture);
@@ -304,7 +304,8 @@ describe('form: component', () => {
                   },
                 },
               })
-              .checkStyle('.ant-form-item-label', 'width', '100px');
+              .checkStyle('.ant-form-item-label', 'flex', '0 0 100px')
+              .checkStyle('.ant-form-item-control', 'maxWidth', 'calc(100% - 100px)');
           });
           it('should inherit parent node', () => {
             page
@@ -319,7 +320,8 @@ describe('form: component', () => {
                   },
                 },
               })
-              .checkStyle('.ant-form-item-label', 'width', '98px');
+              .checkStyle('.ant-form-item-label', 'flex', '0 0 98px')
+              .checkStyle('.ant-form-item-control', 'maxWidth', 'calc(100% - 98px)');
           });
         });
       });
@@ -427,30 +429,43 @@ describe('form: component', () => {
           fixture.detectChanges();
           page.newSchema(
             {
-              properties: { name: { type: 'string' } },
+              properties: {
+                name: { type: 'string' },
+                arr: { type: 'array', items: { type: 'object', properties: { x: { type: 'string' } } } },
+              },
             },
             {},
-            { name: 'a', age: 10 },
+            { name: 'a', age: 10, arr: [{ x: 1, y: 2 }] },
           );
           expect(context.comp.value.age == null).toBe(true);
+          expect(context.comp.value.arr[0].y == null).toBe(true);
         });
         it('with false', () => {
           context.cleanValue = false;
           fixture.detectChanges();
           page.newSchema(
             {
-              properties: { name: { type: 'string' } },
+              properties: {
+                name: { type: 'string' },
+                arr: { type: 'array', items: { type: 'object', properties: { x: { type: 'string' } } } },
+              },
             },
             {},
-            { name: 'a', age: 10 },
+            { name: 'a', age: 10, arr: [{ x: 1, y: 2 }] },
           );
           expect(context.comp.value.age).toBe(10);
+          expect(context.comp.value.arr[0].y).toBe(2);
         });
       });
 
       it('#formChange', () => {
         page.setValue('/name', 'cipchk');
         expect(context.formChange).toHaveBeenCalled();
+      });
+
+      it('#formValueChange', () => {
+        page.setValue('/name', 'cipchk');
+        expect(context.formValueChange).toHaveBeenCalled();
       });
 
       it('#formSubmit', () => {
@@ -667,6 +682,20 @@ describe('form: component', () => {
         fixture.detectChanges();
         expect(page.getProperty('/a').errors![0].message).toBe(context.comp.locale.error.required);
         expect(page.getProperty('/arr').errors![0].message).toBe(context.comp.locale.error.required);
+      });
+
+      it('should be display required * when showRequired is true', () => {
+        const s: SFSchema = {
+          properties: {
+            a: {
+              type: 'string',
+              ui: {
+                showRequired: true,
+              },
+            },
+          },
+        };
+        page.newSchema(s).checkCount('.ant-form-item-required', 1);
       });
     });
   });

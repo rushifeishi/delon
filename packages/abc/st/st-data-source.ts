@@ -1,4 +1,5 @@
 import { DecimalPipe } from '@angular/common';
+import { HttpParams } from '@angular/common/http';
 import { Host, Injectable } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { CNCurrencyPipe, DatePipe, YNPipe, _HttpClient } from '@delon/theme';
@@ -7,10 +8,11 @@ import { NzSafeAny } from 'ng-zorro-antd/core/types';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import {
-  STColumn,
   STColumnFilter,
+  STColumnFilterMenu,
   STData,
   STMultiSort,
+  STMultiSortResultType,
   STPage,
   STReq,
   STReqReNameType,
@@ -24,6 +26,7 @@ import {
   STStatisticalResults,
   STStatisticalType,
 } from './st.interfaces';
+import { _STColumn } from './st.types';
 
 export interface STDataSourceOptions {
   pi: number;
@@ -34,7 +37,7 @@ export interface STDataSourceOptions {
   req: STReq;
   res: STRes;
   page: STPage;
-  columns: STColumn[];
+  columns: _STColumn[];
   singleSort?: STSingleSort;
   multiSort?: STMultiSort;
   rowClassName?: STRowClassName;
@@ -116,7 +119,7 @@ export class STDataSource {
         map((result: STData[]) => {
           rawData = result;
           let copyResult = deepCopy(result);
-          const sorterFn = this.getSorterFn(columns);
+          const sorterFn = this.getSorterFn(columns as _STColumn[]);
           if (sorterFn) {
             copyResult = copyResult.sort(sorterFn);
           }
@@ -172,59 +175,68 @@ export class STDataSource {
           ps: retPs,
           total: retTotal,
           list: retList,
-          statistical: this.genStatistical(columns, retList, rawData),
+          statistical: this.genStatistical(columns as _STColumn[], retList, rawData),
           pageShow: typeof showPage === 'undefined' ? realTotal > realPs : showPage,
         } as STDataSourceResult;
       }),
     );
   }
 
-  private get(item: STData, col: STColumn, idx: number): { text: any; _text: SafeHtml; org?: any; color?: string } {
-    if (col.format) {
-      const formatRes = col.format(item, col, idx) || '';
-      if (formatRes && ~formatRes.indexOf('</')) {
-        return { text: formatRes, _text: this.dom.bypassSecurityTrustHtml(formatRes), org: formatRes };
-      }
-      return { text: formatRes, _text: formatRes, org: formatRes };
-    }
-
-    const value = deepGet(item, col.index as string[], col.default);
-
-    let text = value;
-    let color: string | undefined;
-    switch (col.type) {
-      case 'no':
-        text = this.getNoIndex(item, col, idx);
-        break;
-      case 'img':
-        text = value ? `<img src="${value}" class="img">` : '';
-        break;
-      case 'number':
-        text = this.numberPipe.transform(value, col.numberDigits);
-        break;
-      case 'currency':
-        text = this.currentyPipe.transform(value);
-        break;
-      case 'date':
-        text = value === col.default ? col.default : this.datePipe.transform(value, col.dateFormat);
-        break;
-      case 'yn':
-        text = this.ynPipe.transform(value === col.yn!.truth, col.yn!.yes!, col.yn!.no!, col.yn!.mode!, false);
-        break;
-      case 'tag':
-      case 'badge':
-        const data = col.type === 'tag' ? col.tag : col.badge;
-        if (data && data[text]) {
-          const dataItem = data[text];
-          text = dataItem.text;
-          color = dataItem.color;
-        } else {
-          text = '';
+  private get(item: STData, col: _STColumn, idx: number): { text: string; _text: SafeHtml; org?: any; color?: string } {
+    try {
+      if (col.format) {
+        const formatRes = col.format(item, col, idx) || '';
+        if (formatRes && ~formatRes.indexOf('</')) {
+          return { text: formatRes, _text: this.dom.bypassSecurityTrustHtml(formatRes), org: formatRes };
         }
-        break;
+        return { text: formatRes, _text: formatRes, org: formatRes };
+      }
+
+      const value = deepGet(item, col.index as string[], col.default);
+
+      let text = value;
+      let color: string | undefined;
+      switch (col.type) {
+        case 'no':
+          text = this.getNoIndex(item, col, idx);
+          break;
+        case 'img':
+          text = value ? `<img src="${value}" class="img">` : '';
+          break;
+        case 'number':
+          text = this.numberPipe.transform(value, col.numberDigits);
+          break;
+        case 'currency':
+          text = this.currentyPipe.transform(value);
+          break;
+        case 'date':
+          text = value === col.default ? col.default : this.datePipe.transform(value, col.dateFormat);
+          break;
+        case 'yn':
+          text = this.ynPipe.transform(value === col.yn!.truth, col.yn!.yes!, col.yn!.no!, col.yn!.mode!, false);
+          break;
+        case 'enum':
+          text = col.enum![value];
+          break;
+        case 'tag':
+        case 'badge':
+          const data = col.type === 'tag' ? col.tag : col.badge;
+          if (data && data[text]) {
+            const dataItem = data[text];
+            text = dataItem.text;
+            color = dataItem.color;
+          } else {
+            text = '';
+          }
+          break;
+      }
+      if (text == null) text = '';
+      return { text, _text: this.dom.bypassSecurityTrustHtml(text), org: value, color };
+    } catch (ex) {
+      const text = `INVALID DATA`;
+      console.error(`Failed to get data`, item, col, ex);
+      return { text, _text: this.dom.bypassSecurityTrustHtml(text), org: text };
     }
-    if (text == null) text = '';
-    return { text, _text: this.dom.bypassSecurityTrustHtml(text), org: value, color };
   }
 
   private getByHttp(url: string, options: STDataSourceOptions): Observable<{}> {
@@ -266,10 +278,13 @@ export class STDataSource {
     if (typeof req.process === 'function') {
       reqOptions = req.process(reqOptions);
     }
+    if (!(reqOptions.params instanceof HttpParams)) {
+      reqOptions.params = new HttpParams({ fromObject: reqOptions.params });
+    }
     return this.http.request(method, url, reqOptions);
   }
 
-  optimizeData(options: { columns: STColumn[]; result: STData[]; rowClassName?: STRowClassName }): STData[] {
+  optimizeData(options: { columns: _STColumn[]; result: STData[]; rowClassName?: STRowClassName }): STData[] {
     const { result, columns, rowClassName } = options;
     for (let i = 0, len = result.length; i < len; i++) {
       result[i]._values = columns.map(c => this.get(result[i], c, i));
@@ -280,17 +295,17 @@ export class STDataSource {
     return result;
   }
 
-  getNoIndex(item: STData, col: STColumn, idx: number): number {
+  getNoIndex(item: STData, col: _STColumn, idx: number): number {
     return typeof col.noIndex === 'function' ? col.noIndex(item, col, idx) : col.noIndex! + idx;
   }
 
   // #region sort
 
-  private getValidSort(columns: STColumn[]): STSortMap[] {
+  private getValidSort(columns: _STColumn[]): STSortMap[] {
     return columns.filter(item => item._sort && item._sort.enabled && item._sort.default).map(item => item._sort!);
   }
 
-  private getSorterFn(columns: STColumn[]) {
+  private getSorterFn(columns: _STColumn[]): ((a: STData, b: STData) => number) | void {
     const sortList = this.getValidSort(columns);
     if (sortList.length === 0) {
       return;
@@ -317,38 +332,39 @@ export class STDataSource {
     return ++this.sortTick;
   }
 
-  getReqSortMap(singleSort: STSingleSort | undefined, multiSort: STMultiSort | undefined, columns: STColumn[]): { [key: string]: string } {
-    let ret: { [key: string]: string } = {};
+  getReqSortMap(singleSort: STSingleSort | undefined, multiSort: STMultiSort | undefined, columns: _STColumn[]): STMultiSortResultType {
+    let ret: STMultiSortResultType = {};
     const sortList = this.getValidSort(columns);
-    if (!multiSort && sortList.length === 0) return ret;
 
     if (multiSort) {
-      const ms = {
+      const ms: STMultiSort = {
         key: 'sort',
         separator: '-',
         nameSeparator: '.',
+        keepEmptyKey: true,
+        arrayParam: false,
         ...multiSort,
       };
 
-      ret = {
-        [ms.key]: sortList
-          .sort((a, b) => a.tick - b.tick)
-          .map(item => item.key + ms.nameSeparator + ((item.reName || {})[item.default!] || item.default))
-          .join(ms.separator),
-      };
-      if (multiSort.keepEmptyKey === false && ret[ms.key].length === 0) {
-        ret = {};
-      }
-    } else {
-      const mapData = sortList[0];
-      let sortFiled = mapData.key;
-      let sortValue = (sortList[0].reName || {})[mapData.default!] || mapData.default;
-      if (singleSort) {
-        sortValue = sortFiled + (singleSort.nameSeparator || '.') + sortValue;
-        sortFiled = singleSort.key || 'sort';
-      }
-      ret[sortFiled as string] = sortValue as string;
+      const sortMap = sortList
+        .sort((a, b) => a.tick - b.tick)
+        .map(item => item.key! + ms.nameSeparator + ((item.reName || {})[item.default!] || item.default));
+
+      ret = { [ms.key!]: ms.arrayParam ? sortMap : sortMap.join(ms.separator) };
+
+      return sortMap.length === 0 && ms.keepEmptyKey === false ? {} : ret;
     }
+
+    if (sortList.length === 0) return ret;
+
+    const mapData = sortList[0];
+    let sortFiled = mapData.key;
+    let sortValue = (sortList[0].reName || {})[mapData.default!] || mapData.default;
+    if (singleSort) {
+      sortValue = sortFiled + (singleSort.nameSeparator || '.') + sortValue;
+      sortFiled = singleSort.key || 'sort';
+    }
+    ret[sortFiled as string] = sortValue as string;
     return ret;
   }
 
@@ -356,11 +372,11 @@ export class STDataSource {
 
   // #region filter
 
-  private getFilteredData(filter: STColumnFilter) {
+  private getFilteredData(filter: STColumnFilter): STColumnFilterMenu[] {
     return filter.type === 'default' ? filter.menus!.filter(f => f.checked === true) : filter.menus!.slice(0, 1);
   }
 
-  private getReqFilterMap(columns: STColumn[]): { [key: string]: string } {
+  private getReqFilterMap(columns: _STColumn[]): { [key: string]: string } {
     let ret = {};
     columns
       .filter(w => w.filter && w.filter.default === true)
@@ -382,15 +398,15 @@ export class STDataSource {
 
   // #region statistical
 
-  private genStatistical(columns: STColumn[], list: STData[], rawData: any): STStatisticalResults {
+  private genStatistical(columns: _STColumn[], list: STData[], rawData: any): STStatisticalResults {
     const res: { [key: string]: NzSafeAny } = {};
     columns.forEach((col, index) => {
-      res[col.key ? col.key : index] = col.statistical == null ? {} : this.getStatistical(col, index, list, rawData);
+      res[col.key || col.indexKey || index] = col.statistical == null ? {} : this.getStatistical(col, index, list, rawData);
     });
     return res;
   }
 
-  private getStatistical(col: STColumn, index: number, list: STData[], rawData: any): STStatisticalResult {
+  private getStatistical(col: _STColumn, index: number, list: STData[], rawData: any): STStatisticalResult {
     const val = col.statistical;
     const item: STStatistical = {
       digits: 2,

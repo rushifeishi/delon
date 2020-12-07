@@ -3,7 +3,7 @@ import { BehaviorSubject, combineLatest, Observable } from 'rxjs';
 import { distinctUntilChanged, map } from 'rxjs/operators';
 import { SF_SEQ } from '../const';
 import { ErrorData } from '../errors';
-import { SFValue } from '../interface';
+import { SFFormValueChange, SFUpdateValueAndValidity, SFValue } from '../interface';
 import { SFSchema, SFSchemaType } from '../schema';
 import { SFUISchema, SFUISchemaItem, SFUISchemaItemRun } from '../schema/ui';
 import { isBlank } from '../utils';
@@ -12,7 +12,7 @@ import { Widget } from '../widget';
 
 export abstract class FormProperty {
   private _errors: ErrorData[] | null = null;
-  private _valueChanges = new BehaviorSubject<SFValue>(null);
+  private _valueChanges = new BehaviorSubject<SFFormValueChange>({ path: null, pathValue: null, value: null });
   private _errorsChanges = new BehaviorSubject<ErrorData[] | null>(null);
   private _visible = true;
   private _visibilityChanges = new BehaviorSubject<boolean>(true);
@@ -52,11 +52,11 @@ export abstract class FormProperty {
     this.path = path;
   }
 
-  get valueChanges() {
+  get valueChanges(): BehaviorSubject<SFFormValueChange> {
     return this._valueChanges;
   }
 
-  get errorsChanges() {
+  get errorsChanges(): BehaviorSubject<ErrorData[] | null> {
     return this._errorsChanges;
   }
 
@@ -80,15 +80,15 @@ export abstract class FormProperty {
     return this._errors;
   }
 
-  get visible() {
+  get visible(): boolean {
     return this._visible;
   }
 
-  get valid() {
+  get valid(): boolean {
     return this._errors === null || this._errors.length === 0;
   }
 
-  get options() {
+  get options(): AlainSFConfig {
     return this._options;
   }
 
@@ -118,24 +118,24 @@ export abstract class FormProperty {
 
   /**
    * 更新值且校验数据
-   *
-   * @param [onlySelf=false] 是否包含上级字段
-   * @param [emitValueEvent=true] 是否触发值变更通知
    */
-  updateValueAndValidity(onlySelf = false, emitValueEvent = true, emitValidator = true) {
+  updateValueAndValidity(options?: SFUpdateValueAndValidity): void {
+    options = { onlySelf: false, emitValidator: true, emitValueEvent: true, updatePath: '', updateValue: null, ...options };
     this._updateValue();
 
-    if (emitValueEvent) {
-      this.valueChanges.next(this.value);
+    if (options.emitValueEvent) {
+      options.updatePath = options.updatePath || this.path;
+      options.updateValue = options.updateValue || this.value;
+      this.valueChanges.next({ value: this.value, path: options.updatePath, pathValue: options.updateValue });
     }
 
     // `emitValidator` 每一次数据变更已经包含完整错误链路，后续父节点数据变更无须再触发校验
-    if (emitValidator && this.ui.liveValidate === true) {
+    if (options.emitValidator && this.ui.liveValidate === true) {
       this._runValidation();
     }
 
-    if (this.parent && !onlySelf) {
-      this.parent.updateValueAndValidity(onlySelf, emitValueEvent, false);
+    if (this.parent && !options.onlySelf) {
+      this.parent.updateValueAndValidity({ ...options, emitValidator: false });
     }
   }
 
@@ -168,7 +168,7 @@ export abstract class FormProperty {
 
   // #region process errors
 
-  private isEmptyData(value: {}) {
+  private isEmptyData(value: {}): boolean {
     if (isBlank(value)) return true;
     switch (this.type) {
       case 'string':
@@ -180,7 +180,7 @@ export abstract class FormProperty {
   /**
    * @internal
    */
-  _runValidation() {
+  _runValidation(): void {
     let errors: ErrorData[];
     // The definition of some rules:
     // 1. Should not ajv validator when is empty data and required fields
@@ -211,7 +211,7 @@ export abstract class FormProperty {
     this.setErrors(this._errors);
   }
 
-  private setCustomErrors(errors: ErrorData[], list: ErrorData[]) {
+  private setCustomErrors(errors: ErrorData[], list: ErrorData[]): void {
     // fix error format
     const hasCustomError = list != null && list.length > 0;
     if (hasCustomError) {
@@ -226,7 +226,7 @@ export abstract class FormProperty {
     this.setErrors(this._errors);
   }
 
-  private mergeErrors(errors: ErrorData[], newErrors: ErrorData | ErrorData[]) {
+  private mergeErrors(errors: ErrorData[], newErrors: ErrorData | ErrorData[]): ErrorData[] {
     if (newErrors) {
       if (Array.isArray(newErrors)) {
         errors = errors.concat(...newErrors);
@@ -237,7 +237,7 @@ export abstract class FormProperty {
     return errors;
   }
 
-  protected setErrors(errors: ErrorData[], emitFormat = true) {
+  protected setErrors(errors: ErrorData[], emitFormat: boolean = true): void {
     if (emitFormat && errors && !this.ui.onlyVisual) {
       const l = (this.widget && this.widget.l.error) || {};
       errors = errors.map((err: ErrorData) => {
@@ -267,7 +267,7 @@ export abstract class FormProperty {
     }
   }
 
-  setParentAndPlatErrors(errors: ErrorData[], path: string) {
+  setParentAndPlatErrors(errors: ErrorData[], path: string): void {
     this._objErrors[path] = errors;
     const platErrors: ErrorData[] = [];
     Object.keys(this._objErrors).forEach(p => {
@@ -282,15 +282,17 @@ export abstract class FormProperty {
 
   // #region condition
 
-  private setVisible(visible: boolean) {
+  private setVisible(visible: boolean): void {
     this._visible = visible;
     this._visibilityChanges.next(visible);
     // 部分数据源来自 reset
-    this.resetValue(this.value, true);
+    if (this.root.widget?.sfComp?._inited === true) {
+      this.resetValue(this.value, true);
+    }
   }
 
   // A field is visible if AT LEAST ONE of the properties it depends on is visible AND has a value in the list
-  _bindVisibility() {
+  _bindVisibility(): void {
     const visibleIf = (this.ui as SFUISchemaItem).visibleIf;
     if (typeof visibleIf === 'object' && Object.keys(visibleIf).length === 0) {
       this.setVisible(false);
@@ -301,13 +303,15 @@ export abstract class FormProperty {
           const property = this.searchProperty(dependencyPath);
           if (property) {
             const valueCheck = property.valueChanges.pipe(
-              map((value: SFValue) => {
+              map(res => {
                 const vi = visibleIf[dependencyPath];
-                if (typeof vi === 'function') return vi(value);
+                if (typeof vi === 'function') {
+                  return vi(res.value);
+                }
                 if (vi.indexOf('$ANY$') !== -1) {
-                  return value.length > 0;
+                  return res.value.length > 0;
                 } else {
-                  return vi.indexOf(value) !== -1;
+                  return vi.indexOf(res.value) !== -1;
                 }
               }),
             );
@@ -347,7 +351,7 @@ export abstract class PropertyGroup extends FormProperty {
     return property;
   }
 
-  forEachChild(fn: (formProperty: FormProperty, str: string) => void) {
+  forEachChild(fn: (formProperty: FormProperty, str: string) => void): void {
     for (const propertyId in this.properties) {
       if (this.properties.hasOwnProperty(propertyId)) {
         const property = (this.properties as { [key: string]: FormProperty })[propertyId];
@@ -356,7 +360,7 @@ export abstract class PropertyGroup extends FormProperty {
     }
   }
 
-  forEachChildRecursive(fn: (formProperty: FormProperty) => void) {
+  forEachChildRecursive(fn: (formProperty: FormProperty) => void): void {
     this.forEachChild(child => {
       fn(child);
       if (child instanceof PropertyGroup) {
@@ -365,18 +369,18 @@ export abstract class PropertyGroup extends FormProperty {
     });
   }
 
-  _bindVisibility() {
+  _bindVisibility(): void {
     super._bindVisibility();
     this._bindVisibilityRecursive();
   }
 
-  private _bindVisibilityRecursive() {
+  private _bindVisibilityRecursive(): void {
     this.forEachChildRecursive(property => {
       property._bindVisibility();
     });
   }
 
-  isRoot() {
+  isRoot(): boolean {
     return this === this.root;
   }
 }

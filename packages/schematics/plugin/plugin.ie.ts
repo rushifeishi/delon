@@ -1,4 +1,5 @@
-import { Rule, Tree } from '@angular-devkit/schematics';
+import { Rule, SchematicContext, Tree } from '@angular-devkit/schematics';
+import * as colors from 'ansi-colors';
 import { overwriteFile, readContent } from '../utils/file';
 import { addPackageToPackageJson, getAngular, overwriteAngular, removePackageFromPackageJson } from '../utils/json';
 import { getProject, getProjectFromWorkspace, Project } from '../utils/project';
@@ -8,7 +9,7 @@ import { PluginOptions } from './interface';
 
 let project: Project;
 
-function setAngularJson(host: Tree, options: PluginOptions) {
+function setAngularJson(host: Tree, options: PluginOptions): void {
   const json = getAngular(host);
   const p = getProjectFromWorkspace(json, options.project);
   if (options.type === 'add') {
@@ -27,34 +28,34 @@ function setAngularJson(host: Tree, options: PluginOptions) {
   overwriteAngular(host, json);
 }
 
-function setBrowserslist(host: Tree, options: PluginOptions) {
-  const filePath = `${options.root}/browserslist`;
+function setBrowserslist(host: Tree, options: PluginOptions): void {
+  const filePath = `${options.root}/.browserslistrc`;
   let content = readContent(host, filePath);
   if (options.type === 'add') {
-    content = content.replace(`not IE 9-11`, `not IE 9-10`);
+    content = content.replace(`not IE 11`, `IE 11`);
   } else {
-    content = content.replace(`not IE 9-10`, `not IE 9-11`);
+    content = content.replace(`IE 11`, `not IE 11`);
   }
   overwriteFile(host, filePath, content, true, true);
 }
 
-function setPackage(host: Tree, options: PluginOptions) {
+function setPackage(host: Tree, options: PluginOptions): void {
   // libs
   (options.type === 'add' ? addPackageToPackageJson : removePackageFromPackageJson)(
     host,
-    ['classlist.js@DEP-0.0.0-PLACEHOLDER', 'web-animations-js@DEP-0.0.0-PLACEHOLDER'],
+    ['classlist.js@^1.1.0', 'web-animations-js@^2.3.2'],
     'dependencies',
   );
   // scripts
   (options.type === 'add' ? addPackageToPackageJson : removePackageFromPackageJson)(
     host,
-    ['ie:start@npm run color-less && ng serve -o --configuration es5', 'ie:hmr@npm run color-less && ng serve -c=hmr --configuration es5'],
+    ['ie:start@ng serve -o --configuration es5', 'ie:hmr@ng serve --hmr --configuration es5'],
     'scripts',
   );
 }
 
-function setPolyfills(host: Tree, options: PluginOptions) {
-  const filePath = `${project.sourceRoot}/app/app.module.ts`;
+function setPolyfills(host: Tree, options: PluginOptions): void {
+  const filePath = `${project.sourceRoot}/polyfills.ts`;
   let content = '';
   if (options.type === 'add') {
     content = `import 'core-js/modules/es.array.includes';
@@ -67,7 +68,7 @@ import 'zone.js/dist/zone';`;
   overwriteFile(host, filePath, content, true, true);
 }
 
-function setTsConfig(host: Tree, options: PluginOptions) {
+function setTsConfig(host: Tree, options: PluginOptions): void {
   // build
   const buildFilePath = `${options.root}/tsconfig-es5.app.json`;
   if (host.exists(buildFilePath)) host.delete(buildFilePath);
@@ -83,7 +84,7 @@ function setTsConfig(host: Tree, options: PluginOptions) {
 }
 
 export function pluginIE(options: PluginOptions): Rule {
-  return (host: Tree) => {
+  return (host: Tree, context: SchematicContext) => {
     project = getProject(host, options.project);
 
     setAngularJson(host, options);
@@ -91,5 +92,11 @@ export function pluginIE(options: PluginOptions): Rule {
     setPackage(host, options);
     setPolyfills(host, options);
     setTsConfig(host, options);
+
+    context.logger.info(
+      colors.yellow(
+        `  ⚠  If you encounter [No provider for AlainConfigService], please refer to https://github.com/ng-alain/ng-alain/issues/1624#issuecomment-623071468`,
+      ),
+    );
   };
 }

@@ -3,54 +3,29 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { deepCopy, LazyService } from '@delon/util';
+import { LazyService } from '@delon/util';
 import * as fs from 'file-saver';
-import { of, throwError } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { XlsxModule } from './xlsx.module';
 import { XlsxService } from './xlsx.service';
 import { XlsxExportOptions } from './xlsx.types';
 
 class MockLazyService {
-  load() {
+  load(): Promise<void> {
     return Promise.resolve();
   }
 }
 
-const DEFAULTMOCKXLSX = {
-  utils: {
-    book_new: () => {
-      return {};
-    },
-    aoa_to_sheet: () => {},
-    book_append_sheet: () => {},
-    sheet_to_json: () => {
-      return {
-        A1: 1,
-        B1: 2,
-      };
-    },
-  },
-  read: () => {
-    return {
-      SheetNames: ['sheet1'],
-      Sheets: {
-        sheet1: {},
-      },
-    };
-  },
-  write: () => {},
-};
-
 let isErrorRequest = false;
 class MockHttpClient {
-  request() {
+  request(): Observable<null> {
     return isErrorRequest ? throwError(null) : of(null);
   }
 }
 
 describe('abc: xlsx', () => {
   let srv: XlsxService;
-  function genModule() {
+  function genModule(): void {
     TestBed.configureTestingModule({
       imports: [XlsxModule, HttpClientTestingModule],
       declarations: [TestComponent],
@@ -63,7 +38,30 @@ describe('abc: xlsx', () => {
   }
 
   beforeEach(() => {
-    (window as any).XLSX = deepCopy(DEFAULTMOCKXLSX);
+    (window as any).XLSX = {
+      utils: {
+        book_new: () => {
+          return {};
+        },
+        aoa_to_sheet: () => {},
+        book_append_sheet: () => {},
+        sheet_to_json: () => {
+          return {
+            A1: 1,
+            B1: 2,
+          };
+        },
+      },
+      read: () => {
+        return {
+          SheetNames: ['sheet1'],
+          Sheets: {
+            sheet1: {},
+          },
+        };
+      },
+      write: () => {},
+    };
     isErrorRequest = false;
   });
 
@@ -137,6 +135,7 @@ describe('abc: xlsx', () => {
           sheets: [{ data: null, name: 'asdf.xlsx' }, { data: null }],
         } as XlsxExportOptions)
         .then(() => {
+          // tslint:disable-next-line: deprecation
           expect(fs.saveAs).toHaveBeenCalled();
           done();
         });
@@ -149,6 +148,7 @@ describe('abc: xlsx', () => {
           },
         } as XlsxExportOptions)
         .then(() => {
+          // tslint:disable-next-line: deprecation
           expect(fs.saveAs).toHaveBeenCalled();
           done();
         });
@@ -169,6 +169,23 @@ describe('abc: xlsx', () => {
           done();
         });
     });
+    it('should catch error when XLSX process error', done => {
+      (window as any).XLSX.utils.book_new = null;
+      srv
+        .export({
+          sheets: {
+            name: 'asdf',
+          },
+        } as XlsxExportOptions)
+        .then(() => {
+          expect(true).toBe(false);
+          done();
+        })
+        .catch(() => {
+          expect(true).toBe(true);
+          done();
+        });
+    });
   });
 
   describe('[directive]', () => {
@@ -185,6 +202,17 @@ describe('abc: xlsx', () => {
       expect(srv.export).not.toHaveBeenCalled();
       (dl.query(By.css('button')).nativeElement as HTMLButtonElement).click();
       expect(srv.export).toHaveBeenCalled();
+    });
+  });
+
+  describe('[#numberToSchema]', () => {
+    beforeEach(() => genModule());
+
+    it('should be working', () => {
+      expect(srv.numberToSchema(1)).toBe('A');
+      expect(srv.numberToSchema(27)).toBe('AA');
+      expect(srv.numberToSchema(28)).toBe('AB');
+      expect(srv.numberToSchema(53)).toBe('BA');
     });
   });
 });

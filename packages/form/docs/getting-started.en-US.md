@@ -2,7 +2,6 @@
 order: 1
 title: Getting Started
 type: Documents
-module: DelonFormModule
 ---
 
 @delon/form is a dynamic build form based on the [JSON Schema](http://json-schema.org/) standard.
@@ -131,8 +130,10 @@ export class HomeComponent {
 | `[disabled]` | Whether to disabled status | `boolean` | `false` |
 | `[loading]` | Whether to load status，when `true` reset button is disabled status, submit button is loading status | `boolean` | `false` |
 | `[noColon]` | Whether to not display `:` after label text. | `boolean` | `false` |
+| `[compact]` | Whether compact style | `boolean` | `false` |
 | `[cleanValue]` | Whether to clean up data for undefined Schema | `boolean` | `false` |
 | `(formChange)` | Callback when data changes | `EventEmitter<{}>` | - |
+| `(formValueChange)` | Callback when value changes | `EventEmitter<SFValueChange>` | - |
 | `(formSubmit)` | Callback when submitting the form | `EventEmitter<{}>` | - |
 | `(formReset)` | Callback when resetting the form | `EventEmitter<{}>` | - |
 | `(formError)` | Callback when form check | `EventEmitter<ErrorData[]>` | - |
@@ -150,6 +151,14 @@ export class HomeComponent {
 | `[search]` | Search text of button | `string` | `搜索` |
 | `[edit]` | Edit text of button | `string` | `保存` |
 | `[render]` | Button layout | `SFRenderButton` | - |
+
+### SFValueChange
+
+| Property | Description | Type | Default |
+|----------|-------------|------|---------|
+| `[value]` | Always return complete data | `SFValue` | - |
+| `[path]` | Current triggered path | `string, null` | `null` |
+| `[pathValue]` | Current path value | `SFValue` | - |
 
 ### Methods
 
@@ -189,12 +198,12 @@ export class HomeComponent {
 
 ### What is mode
 
-`mode` 只是快捷作用，**且优先级高于一切**，规则如下：
+`mode` is just a quick action, **which has the highest priority**, rules:
 
-- `default` 默认模式，什么也不做
-- `search` 搜索模式，自动设置 `layout: inline`、`firstVisual: false`、`liveValidate: false`、`button.submit: '搜索'`
-- `edit` 编辑模式，自动设置 `layout: horizontal`、`firstVisual: false`、`liveValidate: true`、`button.submit: '保存'`
+- `default` default mode, do nothing
+- `search` search mode, automatically set `layout: inline`、`firstVisual: false`、`liveValidate: false`、`button.submit: 'Search'`
+- `edit` edit mode,  automatically set `layout: horizontal`、`firstVisual: false`、`liveValidate: true`、`button.submit: 'Save'`
 
-### Schema国际化
+### Schema Internationalization
 
-`sf` 并不支持任何 Schema 国际化动作，这是因为本身 Schema 是一组 JSON 值，国际化的实现只需要提供不同语言版本即可。
+`sf` doesn't support any Schema internationalization, this is because Schema itself is a group of JSON values, you can just provide different versions of languages to support internationalization.

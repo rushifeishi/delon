@@ -41,7 +41,7 @@ const MOCKDATE = new Date();
 const MOCKIMG = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFhAJ/wlseKgAAAABJRU5ErkJggg==`;
 const r = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1) + min);
 
-function genData(count: number) {
+function genData(count: number): any[] {
   return Array(count)
     .fill({})
     .map((_item: any, idx: number) => {
@@ -70,13 +70,13 @@ const USERS: any[] = genData(DEFAULTCOUNT);
 const i18nResult = 'zh';
 @Injectable()
 class MockI18NServiceFake extends AlainI18NServiceFake {
-  fanyi(_key: string) {
+  fanyi(_key: string): string {
     return i18nResult;
   }
 }
 
 class MockNzI18nService {
-  getDateLocale() {
+  getDateLocale(): null {
     return null;
   }
 }
@@ -90,7 +90,7 @@ describe('abc: table', () => {
   let i18nSrv: AlainI18NService;
   let registerWidget: STWidgetRegistry;
 
-  function genModule(other: { template?: string; i18n?: boolean; minColumn?: boolean; providers?: any[]; createComp?: boolean }) {
+  function genModule(other: { template?: string; i18n?: boolean; minColumn?: boolean; providers?: any[]; createComp?: boolean }): void {
     other = {
       template: '',
       i18n: false,
@@ -134,7 +134,7 @@ describe('abc: table', () => {
     }
   }
 
-  function createComp<T extends TestComponent>(minColumn = false, type: Type<T>) {
+  function createComp<T extends TestComponent>(minColumn: boolean = false, type: Type<T>): void {
     fixture = TestBed.createComponent(type);
     dl = fixture.debugElement;
     context = dl.componentInstance;
@@ -748,7 +748,8 @@ describe('abc: table', () => {
           });
         });
       });
-      describe('[fixed]', () => {
+      // TODO: 当前版本自动设置，无须参与计算
+      xdescribe('[fixed]', () => {
         it('should be fixed left column', fakeAsync(() => {
           page.updateColumn([
             { title: '1', index: 'id', fixed: 'left', width: '100px' },
@@ -770,6 +771,32 @@ describe('abc: table', () => {
           expect(page.getCell(1, 2).style.right).toBe('100px');
           expect(page.getCell(1, 3).style.right).toBe('0px');
           page.asyncEnd();
+        }));
+      });
+      describe('[Mulit Headers]', () => {
+        it('should be working', fakeAsync(() => {
+          page.updateColumn([
+            {
+              title: 'user',
+              children: [
+                { title: 'name', index: 'name' },
+                { title: 'age', index: 'age', colSpan: 1, rowSpan: 2 },
+              ],
+            },
+          ]);
+          page.expectElCount('.ant-table-thead .ant-table-row', 2).expectElCount('.ant-table-thead .ant-table-cell', 3).asyncEnd();
+        }));
+        it('should be auto set widthConfig when column has width value', fakeAsync(() => {
+          page.updateColumn([
+            {
+              title: 'user',
+              children: [
+                { title: 'name', index: 'name' },
+                { title: 'age', index: 'age', width: 100 },
+              ],
+            },
+          ]);
+          page.expectElCount('.ant-table-thead .ant-table-row', 2).expectElCount('.ant-table-thead .ant-table-cell', 3).asyncEnd();
         }));
       });
     });
@@ -1048,6 +1075,17 @@ describe('abc: table', () => {
         expect(el.scrollIntoView).not.toHaveBeenCalled();
         page.asyncEnd();
       }));
+      it('should be working in virtual scroll', fakeAsync(() => {
+        context.page.toTop = true;
+        context.virtualScroll = true;
+        context.scroll = { x: '100px', y: '100px' };
+        page.cd();
+        expect(context.comp.cdkVirtualScrollViewport != null).toBe(true);
+        spyOn(context.comp.cdkVirtualScrollViewport, 'checkViewportSize');
+        page.cd().go(2);
+        expect(context.comp.cdkVirtualScrollViewport.checkViewportSize).toHaveBeenCalled();
+        page.asyncEnd();
+      }));
     });
     describe('#expand', () => {
       beforeEach(() => createComp(true, TestExpandComponent));
@@ -1074,6 +1112,16 @@ describe('abc: table', () => {
           page.expectData(1, 'expand', undefined);
           el.click();
           page.expectData(1, 'expand', undefined).asyncEnd();
+        }));
+        it('should be click icon when with true', fakeAsync(() => {
+          context.expandRowByClick = true;
+          page
+            .cd()
+            .expectData(1, 'expand', undefined)
+            .clickCell('.ant-table-row-expand-icon')
+            .expectData(1, 'expand', true)
+            .expectChangeType('expand')
+            .asyncEnd();
         }));
       });
       describe('expandRowByClick', () => {
@@ -1230,10 +1278,18 @@ describe('abc: table', () => {
           beforeEach(() => (context.multiSort = false));
           it('muse provide the compare function', fakeAsync(() => {
             spyOn(console, 'warn');
-            page.updateColumn([{ title: '', index: 'i', sort: true }]);
+            page.updateColumn([{ title: '', index: 'i', sort: { compare: 'a' } as any }]);
             comp.sort(comp._columns[0], 0, 'descend');
             page.cd();
             expect(console.warn).toHaveBeenCalled();
+            page.asyncEnd();
+          }));
+          it('should be auto generate compose when sort is true', fakeAsync(() => {
+            context.data = [{ i: 1 }, { i: 2 }];
+            page.updateColumn([{ title: '', index: 'i', sort: true }]);
+            comp.sort(comp._columns[0], 0, 'descend');
+            page.cd();
+            expect(context.comp.list[0].i).toBe(2);
             page.asyncEnd();
           }));
           it('should be sorting', fakeAsync(() => {
@@ -1413,9 +1469,9 @@ describe('abc: table', () => {
         }));
         it('shoule be recalculate no value', fakeAsync(() => {
           page.updateColumn([{ title: '', type: 'no' }]).expectCurrentPageTotal(PS);
-          comp._data.forEach((v, idx) => expect(v._values[0].text).toBe(idx + 1));
+          comp._data.forEach((_v, idx) => page.expectCell(`${idx + 1}`, idx + 1));
           comp.removeRow(comp._data[0]);
-          comp._data.forEach((v, idx) => expect(v._values[0].text).toBe(idx + 1));
+          comp._data.forEach((_v, idx) => page.expectCell(`${idx + 1}`, idx + 1));
         }));
         it('shoule be ingored invalid data', fakeAsync(() => {
           page.cd().expectCurrentPageTotal(PS);
@@ -1502,6 +1558,12 @@ describe('abc: table', () => {
           expect(compAny.loadPageData).not.toHaveBeenCalled();
           page.asyncEnd();
         }));
+        it('should be pre-clear data', fakeAsync(() => {
+          const cls = '.st__body tr[data-index="0"] td';
+          page.updateColumn([{ title: '', index: 'name' }]).expectElCount(cls, 1);
+          comp.resetColumns({ preClearData: true, columns: [{ title: '', index: 'invalid-name' }] });
+          page.cd().expectElContent(cls, '').asyncEnd();
+        }));
       });
       it('#filteredData', fakeAsync(() => {
         page.cd();
@@ -1522,16 +1584,6 @@ describe('abc: table', () => {
         expect(comp.list.length).toBe(PS);
         page.asyncEnd();
       }));
-      // it('#cdkVirtualScrollViewport', done => {
-      //   context.virtualScroll = true;
-      //   context.data = genData(10);
-      //   fixture.detectChanges();
-      //   fixture.whenStable().then(() => {
-      //     fixture.detectChanges();
-      //     expect(context.comp.cdkVirtualScrollViewport != null).toBe(true);
-      //     done();
-      //   });
-      // });
     });
     describe('#export', () => {
       let exportSrv: STExport;
@@ -1672,6 +1724,26 @@ describe('abc: table', () => {
           .asyncEnd();
       }));
     });
+    describe('#resizable', () => {
+      it('should be working', fakeAsync(() => {
+        page.updateColumn([
+          { index: 'id', resizable: true },
+          { index: 'id', resizable: true },
+        ]);
+        comp.colResize({ width: 100 }, { width: 10 });
+        expect(page._changeData.type).toBe('resize');
+        page.asyncEnd();
+      }));
+      it('should be ingore resize hanle of last column', fakeAsync(() => {
+        page
+          .updateColumn([
+            { index: 'id', resizable: true },
+            { index: 'id', resizable: true },
+          ])
+          .expectElCount('nz-resize-handle', 1)
+          .asyncEnd();
+      }));
+    });
   });
 
   describe('#multiSort', () => {
@@ -1787,7 +1859,7 @@ describe('abc: table', () => {
     /**
      * 获取单元格，下标从 `1` 开始
      */
-    getCell(row: number = 1, column: number = 1) {
+    getCell(row: number = 1, column: number = 1): HTMLElement {
       const cell = (dl.nativeElement as HTMLElement).querySelector(
         `.st__body tr[data-index="${row - 1}"] td:nth-child(${column})`,
       ) as HTMLElement;
@@ -1796,7 +1868,7 @@ describe('abc: table', () => {
     /**
      * 单击单元格，下标从 `1` 开始
      */
-    clickCell(rowOrCls: number | string = 1, column: number = 1, cls?: string) {
+    clickCell(rowOrCls: number | string = 1, column: number = 1, cls?: string): this {
       if (typeof rowOrCls === 'string') {
         cls = rowOrCls.toString();
         rowOrCls = 1;
@@ -1831,7 +1903,7 @@ describe('abc: table', () => {
       return this;
     }
     /** 获取标头 */
-    getHead(name: string) {
+    getHead(name: string): HTMLElement {
       const el = (dl.nativeElement as HTMLElement).querySelector(`.ant-table-thead th[data-col="${name}"]`) as HTMLElement;
       return el;
     }
@@ -1868,11 +1940,11 @@ describe('abc: table', () => {
       return this;
     }
     /** 切换分页 */
-    go(pi: number = 2) {
+    go(pi: number = 2): this {
       this.getEl(`.ant-pagination [title="${pi}"]`).click();
       return this.cd();
     }
-    cd(time = 1000): this {
+    cd(time: number = 1000): this {
       fixture.detectChanges();
       tick(time);
       fixture.detectChanges();
@@ -1882,7 +1954,7 @@ describe('abc: table', () => {
       context.data = data;
       return this.cd();
     }
-    updateColumn(columns: STColumn[], pi = 1, ps = PS): this {
+    updateColumn(columns: STColumn[], pi: number = 1, ps: number = PS): this {
       context.columns = columns;
       context.pi = pi;
       context.ps = ps;
@@ -1923,7 +1995,7 @@ describe('abc: table', () => {
       }
       return this;
     }
-    expectChangeType(type: STChangeType, called = true) {
+    expectChangeType(type: STChangeType, called: boolean = true): this {
       const callAll = this.changeSpy.calls.all();
       const args = callAll[callAll.length - 1].args[0];
       if (called) {
@@ -1938,12 +2010,12 @@ describe('abc: table', () => {
       fixture.detectChanges();
       return this;
     }
-    openDropDownInRow(row: number = 1) {
+    openDropDownInRow(row: number = 1): this {
       dispatchDropDown(dl.query(By.css(`.st__body tr[data-index="${row - 1}"]`)), 'mouseleave');
       fixture.detectChanges();
       return this;
     }
-    asyncEnd() {
+    asyncEnd(): this {
       flush();
       discardPeriodicTasks();
       return this;
@@ -2000,7 +2072,7 @@ class TestComponent {
   scroll: { y?: string; x?: string };
   multiSort: boolean | STMultiSort;
   noResult = 'noResult';
-  widthConfig: string[];
+  widthConfig: string[] = [];
   rowClickTime = 200;
   responsive = false;
   responsiveHideHeaderFooter = false;
@@ -2009,8 +2081,8 @@ class TestComponent {
   widthMode: STWidthMode = {};
   virtualScroll = false;
 
-  error() {}
-  change() {}
+  error(): void {}
+  change(): void {}
 }
 
 @Component({

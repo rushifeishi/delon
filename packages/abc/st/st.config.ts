@@ -28,6 +28,8 @@ export const ST_DEFULAT_CONFIG: AlainSTConfig = {
     total: true,
     toTop: true,
     toTopOffset: 100,
+    itemRender: null,
+    simple: false,
   },
   modal: {
     paramsName: 'record',
@@ -47,7 +49,6 @@ export const ST_DEFULAT_CONFIG: AlainSTConfig = {
   },
   rowClickTime: 200,
   btnIcon: {
-    type: '',
     theme: 'outline',
     spin: false,
   },
@@ -62,4 +63,5 @@ export const ST_DEFULAT_CONFIG: AlainSTConfig = {
   virtualMaxBufferPx: 200,
   virtualMinBufferPx: 100,
   iifBehavior: 'hide',
+  loadingDelay: 0,
 };

@@ -1,7 +1,10 @@
 import { HttpHeaders, HttpParams } from '@angular/common/http';
+import { ElementRef, TemplateRef } from '@angular/core';
+import { ACLCanType } from '@delon/acl';
 import { DrawerHelperOptions, ModalHelperOptions, YNMode } from '@delon/theme';
 import { NzDrawerOptions } from 'ng-zorro-antd/drawer';
 import { ModalOptions } from 'ng-zorro-antd/modal';
+import { PaginationItemRenderContext } from 'ng-zorro-antd/pagination';
 import { STComponent } from './st.component';
 
 export interface STWidthMode {
@@ -24,7 +27,11 @@ export interface STResetColumnsOption {
   ps?: number;
   columns?: STColumn[];
   /**
-   * Whether to trigger a data load, default: `true`
+   * Whether to pre-clear data, Default: `false`
+   */
+  preClearData?: boolean;
+  /**
+   * Whether to trigger a data load, Default: `true`
    */
   emitReload?: boolean;
 }
@@ -139,6 +146,14 @@ export interface STPage {
    */
   showQuickJumper?: boolean;
   /**
+   * 用于自定义页码的结构，用法参照 Pagination 组件
+   */
+  itemRender?: TemplateRef<PaginationItemRenderContext> | null;
+  /**
+   * 当添加该属性时，显示为简单分页，默认：`false`
+   */
+  simple?: boolean;
+  /**
    * 是否显示总数据量
    * - `boolean` 类型显示与否，默认模板：`共 {{total}} 条`
    * - `string` 自定义模板，模板变量：
@@ -186,7 +201,7 @@ export interface STData {
  */
 export interface STColumn {
   /**
-   * 用于定义数据源主键，例如：`STStatistical`
+   * 用于定义数据源主键，例如：`statistical`
    */
   key?: string;
   /**
@@ -208,6 +223,7 @@ export interface STColumn {
    * - `link` 链接，务必指定 `click`
    * - `badge` [徽标](https://ng.ant.design/components/badge/zh)，务必指定 `badge` 参数配置徽标对应值
    * - `tag` [标签](https://ng.ant.design/components/tag/zh)，务必指定 `tag` 参数配置标签对应值
+   * - `enum` 枚举转换，务必指定 `enum` 参数配置标签对应值
    * - `img` 图片且居中(若 `className` 存在则优先)
    * - `number` 数字且居右(若 `className` 存在则优先)
    * - `currency` 货币且居右(若 `className` 存在则优先)
@@ -215,7 +231,7 @@ export interface STColumn {
    * - `yn` 将`boolean`类型徽章化 [document](https://ng-alain.com/docs/data-render#yn)
    * - `widget` 使用自定义小部件动态创建
    */
-  type?: 'checkbox' | 'link' | 'badge' | 'tag' | 'radio' | 'img' | 'currency' | 'number' | 'date' | 'yn' | 'no' | 'widget';
+  type?: '' | 'checkbox' | 'link' | 'badge' | 'tag' | 'enum' | 'radio' | 'img' | 'currency' | 'number' | 'date' | 'yn' | 'no' | 'widget';
   /**
    * 链接回调，若返回一个字符串表示导航URL会自动触发 `router.navigateByUrl`
    */
@@ -231,7 +247,7 @@ export interface STColumn {
    *  {{ c.title }}
    * </ng-template>
    */
-  render?: string;
+  render?: string | TemplateRef<void> | TemplateRef<{ $implicit: STData; index: number }>;
   /**
    * 标题自定义渲染ID
    * @example
@@ -239,7 +255,7 @@ export interface STColumn {
    *  {{ item | json }}
    * </ng-template>
    */
-  renderTitle?: string;
+  renderTitle?: string | TemplateRef<void> | TemplateRef<{ $implicit: STColumn; index: number }>;
   /**
    * 列宽（数字型表示 `px` 值），例如：`100`、`10%`、`100px`
    *
@@ -248,7 +264,7 @@ export interface STColumn {
   width?: string | number;
   /**
    * 排序配置项，远程数据配置**优先**规则：
-   * - `true` 表示允许排序
+   * - `true` 表示允许排序，且若数据源为本地时自动生成 `compare: (a, b) => a[index] - b[index]` 方法
    * - `string` 表示远程数据排序相对应 `key` 值
    */
   sort?: true | string | STColumnSort;
@@ -269,9 +285,9 @@ export interface STColumn {
    * - `text-center` 居中
    * - `text-right` 居右
    * - `text-success` 成功色
-   * - `text-danger` 异常色
+   * - `text-error` 异常色
    */
-  className?: string;
+  className?: string | string[] | Set<string> | { [klass: string]: any };
   /**
    * 合并列
    */
@@ -295,7 +311,7 @@ export interface STColumn {
   /**
    * 权限，等同 [ACLCanType](https://ng-alain.com/acl/getting-started/#ACLCanType) 参数值
    */
-  acl?: any;
+  acl?: ACLCanType;
   /** 当不存在数据时以默认值替代 */
   default?: string;
   /**
@@ -327,16 +343,32 @@ export interface STColumn {
   iif?: (item: STColumn) => boolean;
 
   /**
-   * 统计
+   * 统计列数据
+   * - 若使用自定义统计函数可无须指定 `index`
+   * - 可以根据 `key` 来定义生成后需要的键名，如果未指定 `key` 则使用 `index` 来表示键名
+   * - 当无法找到有效键名时，使用下标（从 `0` 开始）来代替
    */
   statistical?: STStatisticalType | STStatistical;
 
   widget?: STWidgetColumn;
 
-  /** @ignore internal property */
-  _sort?: STSortMap;
+  enum?: { [key: string]: string; [key: number]: string };
 
-  [key: string]: any;
+  /**
+   * 分组表头
+   */
+  children?: STColumn[];
+
+  rowSpan?: number;
+
+  /**
+   * 调整表头配置
+   * - 注意：**不要忘记**在 `src/styles` 下增加 `nz-resizable` Less 样式文件：`@import '~ng-zorro-antd/resizable/style/entry.less';`
+   * - **不支持多表头**
+   */
+  resizable?: STResizable | boolean;
+
+  // [key: string]: any;
 }
 
 export interface STWidgetColumn {
@@ -404,6 +436,7 @@ export interface STColumnSort {
   /**
    * 本地数据的排序函数，使用一个函数(参考 [Array.sort](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort) 的 compareFunction)
    * - `null` 忽略本地排序，但保持排序功能
+   * - 若数据源为本地时自动生成 `(a, b) => a[index] - b[index]` 方法
    */
   compare?: ((a: STData, b: STData) => number) | null;
   /**
@@ -495,7 +528,7 @@ export interface STColumnFilterMenu {
   /**
    * 权限，等同 [ACLCanType](https://ng-alain.com/acl/getting-started/#ACLCanType) 参数值
    */
-  acl?: any;
+  acl?: ACLCanType;
 
   [key: string]: any;
 }
@@ -510,7 +543,7 @@ export interface STColumnSelection {
    */
   select: (data: STData[]) => void;
   /** 权限，等同 `can()` 参数值 */
-  acl?: any;
+  acl?: ACLCanType;
 }
 
 /** 当 `type=yn` 有效 */
@@ -606,7 +639,7 @@ export interface STColumnButton {
   /**
    * 权限，等同 [ACLCanType](https://ng-alain.com/acl/getting-started/#ACLCanType) 参数值
    */
-  acl?: any;
+  acl?: ACLCanType;
   /**
    * Conditional expression
    *
@@ -619,6 +652,13 @@ export interface STColumnButton {
   iifBehavior?: IifBehaviorType;
 
   tooltip?: string;
+
+  /**
+   * 按钮 `class` 属性值（注：无须 `.` 点）多个用空格隔开，例如：
+   * - `text-success` 成功色
+   * - `text-error` 错误色
+   */
+  className?: string | string[] | Set<string> | { [klass: string]: any };
 
   [key: string]: any;
 }
@@ -789,10 +829,14 @@ export interface STResReNameType {
 }
 
 export interface STExportOptions {
-  /** @ignore internal property */
-  _d?: any[];
-  /** @ignore internal property */
-  _c?: STColumn[];
+  /**
+   * Specify the currently exported data, default the current table data
+   */
+  data?: STData[];
+  /**
+   * Specify the currently exported column configuration, default the current table data
+   */
+  columens?: STColumn[];
   /** 工作溥名 */
   sheetname?: string;
   /** 文件名 */
@@ -824,18 +868,28 @@ export interface STMultiSort {
   /** 列名与状态间分隔符，默认：`.` */
   nameSeparator?: string;
   /**
-   * 是否全局多排序模式，默认：`true`
-   * - `true` 表示所有 `st` 默认为多排序
-   * - `false` 表示需要为每个 `st` 添加 `multiSort` 才会视为多排序模式
+   * 是否以数组的形式传递参数，默认：`false`
+   * - `true` 表示使用 `url?sort=name.asc&sort=age.desc` 形式
+   * - `false` 表示使用 `url?sort=name.asc-age.desc` 形式
    */
-  global?: boolean;
+  arrayParam?: boolean;
   /**
    * 是否保持空值的键名，默认：`true`
    * - `true` 表示不管是否有排序都会发送 `key` 键名
    * - `false` 表示无排序动作时不会发送 `key` 键名
    */
   keepEmptyKey?: boolean;
+  /**
+   * ## 仅限全局配置项有效
+   *
+   * 是否全局多排序模式，默认：`true`
+   * - `true` 表示所有 `st` 默认为多排序
+   * - `false` 表示需要为每个 `st` 添加 `multiSort` 才会视为多排序模式
+   */
+  global?: boolean;
 }
+
+export type STMultiSortResultType = { [key: string]: string | string[] };
 
 /**
  * 徽标信息
@@ -877,7 +931,7 @@ export interface STColumnTagValue {
   color?: 'geekblue' | 'blue' | 'purple' | 'success' | 'red' | 'volcano' | 'orange' | 'gold' | 'lime' | 'green' | 'cyan' | string;
 }
 
-export type STChangeType = 'loaded' | 'pi' | 'ps' | 'checkbox' | 'radio' | 'sort' | 'filter' | 'click' | 'dblClick' | 'expand';
+export type STChangeType = 'loaded' | 'pi' | 'ps' | 'checkbox' | 'radio' | 'sort' | 'filter' | 'click' | 'dblClick' | 'expand' | 'resize';
 
 /**
  * 回调数据
@@ -931,6 +985,10 @@ export interface STChange {
    * `expand` 参数
    */
   expand?: STData;
+  /**
+   * `resize` 参数
+   */
+  resize?: STColumn;
 }
 
 /** 行单击参数 */
@@ -953,3 +1011,35 @@ export interface STError {
 }
 
 export type STRowClassName = (record: STData, index: number) => string;
+
+export interface STColumnGroupType {
+  column: STColumn;
+  colStart: number;
+  colEnd?: number;
+  colSpan?: number;
+  rowSpan?: number;
+  hasSubColumns?: boolean;
+}
+
+export interface STResizable {
+  /**
+   * Disable resize, Default: `true`
+   */
+  disabled?: boolean;
+  /**
+   * Specifies resize boundaries, Default: `window`
+   */
+  bounds?: 'window' | 'parent' | ElementRef<HTMLElement>;
+  /**
+   * Maximum width of resizable elemen, Default: `60`
+   */
+  maxWidth?: number;
+  /**
+   * Minimum width of resizable element, Default: `360`
+   */
+  minWidth?: number;
+  /**
+   * Enable preview when resizing, Default: `true`
+   */
+  preview?: boolean;
+}

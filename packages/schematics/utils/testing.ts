@@ -2,19 +2,26 @@ import { SchematicTestRunner, UnitTestTree } from '@angular-devkit/schematics/te
 import { join } from 'path';
 import { Schema as NgAddSchema } from '../ng-add/schema';
 
+/** Path to the collection file for the Material schematics */
+export const collectionPath = join(__dirname, '..', 'collection.json');
+
+/** Path to the migration file for the Material update schematics */
+export const migrationCollection = join(__dirname, '..', 'migration.json');
+
 export const APPNAME = 'foo';
+export const FILE_PREFIX = `/projects/${APPNAME}`;
 
 export interface AppResult {
   runner: SchematicTestRunner;
   tree: UnitTestTree;
 }
 
-export function createNgRunner() {
+export function createNgRunner(): SchematicTestRunner {
   return new SchematicTestRunner('schematics', join('./node_modules/@schematics/angular/collection.json'));
 }
 
-export function createAlainRunner() {
-  return new SchematicTestRunner('schematics', join(__dirname, '../collection.json'));
+export function createAlainRunner(): SchematicTestRunner {
+  return new SchematicTestRunner('schematics', collectionPath);
 }
 
 export async function createAlainApp(ngAddOptions?: NgAddSchema): Promise<AppResult> {
@@ -55,7 +62,7 @@ export async function createAlainApp(ngAddOptions?: NgAddSchema): Promise<AppRes
   return { runner: alainRunner, tree };
 }
 
-export async function createAlainAndModuleApp(name = 'trade', ngAddOptions?: object): Promise<AppResult> {
+export async function createAlainAndModuleApp(name: string = 'trade', ngAddOptions?: object): Promise<AppResult> {
   const res = await createAlainApp(ngAddOptions);
   res.tree = await res.runner.runSchematicAsync('module', { name, project: APPNAME, routing: true }, res.tree).toPromise();
   return res;

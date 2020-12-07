@@ -16,7 +16,7 @@ export default {
     close: 'Sekmeyi Kapat',
     closeOther: 'Diğer sekmeleri kapat',
     closeRight: 'Sağdaki sekmeleri kapat',
-    clear: 'Sekmeleri temizle',
+    refresh: 'täzele',
   },
   tagSelect: {
     expand: 'Genişlet',
@@ -74,5 +74,11 @@ export default {
       formatExclusiveMinimum: `formatExclusiveMinimum should be boolean`,
       if: `Should match "{failingKeyword}" schema`,
     },
+  },
+  onboarding: {
+    skip: `Atla`,
+    prev: `Önceki`,
+    next: `Sonraki`,
+    done: `Bitti`,
   },
 } as FullLocaleData;

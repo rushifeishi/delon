@@ -1,16 +1,16 @@
-@import '../../../theme/styles/default.less';
-@import './variable.less';
+@import '../../../theme/theme-default.less';
+@se-prefix: ~'.se';
 
 @{se-prefix} {
   &__title {
     display: block;
     float: none;
     clear: both;
+    width: 100%;
     color: @heading-color;
     font-weight: 700;
     font-size: 14px;
     line-height: @line-height-base;
-    width: 100%;
   }
 
   &__item {
@@ -31,7 +31,6 @@
     display: table-cell;
     flex: 0 0 auto;
     width: initial;
-    color: @se-label-color;
     white-space: nowrap;
     text-align: right;
 
@@ -43,7 +42,7 @@
         margin-left: 0;
       }
 
-      >.anticon {
+      > .anticon {
         margin-left: @se-optional-margin;
       }
     }
@@ -55,8 +54,8 @@
   }
 
   &__compact {
-    @{se-prefix}__title,
-    @{se-prefix}__item {
+    > @{se-prefix}__title,
+    > @{se-prefix}__item {
       margin-bottom: @se-compact-bottom;
     }
 
@@ -66,7 +65,8 @@
   }
 
   &__line {
-    border-bottom: 1px dashed #e8e8e8;
+    padding-bottom: @layout-gutter;
+    border-bottom: 1px dashed @border-color-split;
   }
 
   &__hide-label,
@@ -78,7 +78,7 @@
   }
 
   &__horizontal {
-    @{se-prefix}__item {
+    > @{se-prefix}__item {
       display: flex;
 
       &:last-child {
@@ -100,7 +100,7 @@
           line-height: inherit;
         }
 
-        &-label>label::after {
+        &-label > label::after {
           margin-left: 4px;
         }
       }
@@ -108,7 +108,7 @@
   }
 
   &__vertical {
-    @{se-prefix}__item {
+    > @{se-prefix}__item {
       display: block;
       width: 100%;
     }
@@ -117,12 +117,18 @@
   &__inline {
     .@{ant-prefix}-form-item-label,
     @{se-prefix}__control {
-      flex: none;
+      display: inline-block;
       width: initial !important;
       text-align: left;
+      vertical-align: top;
     }
 
-    @{se-prefix}__item {
+    > @{se-prefix}__item {
+      margin-right: 16px;
+      &[col='1'] {
+        flex-basis: auto;
+        width: 100%;
+      }
       &:last-child {
         margin-right: 0;
       }
@@ -133,7 +139,7 @@
 @media (max-width: @mobile-max) {
   @{se-prefix} {
     &__horizontal {
-      @{se-prefix}__item {
+      > @{se-prefix}__item {
         display: block;
 
         .@{ant-prefix}-form-item-label {

@@ -4,7 +4,7 @@ order: 1
 title: reuse-tab
 subtitle: 路由复用标签
 cols: 1
-module: ReuseTabModule
+module: import { ReuseTabModule } from '@delon/abc/reuse-tab';
 ---
 
 复用标签在中台系统非常常见，本质是解决不同路由页切换时组件数据不丢失问题。
@@ -17,17 +17,17 @@ module: ReuseTabModule
 
 **注册RouteReuseStrategy**
 
-> ng-alain 使用方式参考：[global-config.module.ts](https://github.com/ng-alain/ng-alain/blob/master/src/app/global-config.module.ts#L22)。
+> ng-alain 使用方式参考：[global-config.module.ts](https://github.com/ng-alain/ng-alain/blob/master/src/app/global-config.module.ts#L32)。
 
 ```ts
 // global-config.module.ts
-providers: [
-  {
-    provide: RouteReuseStrategy,
-    useClass: ReuseTabStrategy,
-    deps: [ReuseTabService],
-  }
-]
+import { RouteReuseStrategy } from '@angular/router';
+import { ReuseTabService, ReuseTabStrategy } from '@delon/abc/reuse-tab';
+alainProvides.push({
+  provide: RouteReuseStrategy,
+  useClass: ReuseTabStrategy,
+  deps: [ReuseTabService],
+} as any);
 ```
 
 **添加组件**
@@ -36,10 +36,12 @@ providers: [
 
 ```html
 <section class="alain-default__content">
-  <reuse-tab></reuse-tab>
-  <router-outlet></router-outlet>
+  <reuse-tab #reuseTab></reuse-tab>
+  <router-outlet (activate)="reuseTab.activate($event)"></router-outlet>
 </section>
 ```
+
+> **注意：若不指定 `(activate)` 事件，无法刷新未缓存过的当前标签页。**
 
 ## 匹配模式
 
@@ -112,21 +114,30 @@ export class DemoReuseTabEditComponent implements OnInit {
 
 路由复用不会触发现Angular组件生命周期钩子（例如：`ngOnInit` 等），但是往往需要在复用过程中刷新数据，因此提供了两种新生命周期钩子用于临时解决这类问题。
 
-**_onReuseInit()**
+**OnReuseInit** 接口
 
-当目前路由在复用过程中时触发。
+- `_onReuseInit(type?: ReuseHookOnReuseInitType): void;`
 
-**_onReuseDestroy()**
+当目前路由在复用过程中时触发，`type` 值分别为：
+
+- `init` 当路由复用时
+- `refresh` 当触发刷新动作时
+
+**OnReuseDestroy** 接口
+
+- `_onReuseDestroy(): void;`
 
 当目前路由允许复用且进入新路由时触发。
 
 > 以 `_` 开头希望未来 Angular 会有相应的钩子用于快速替换，一个简单的示例：
 
 ```ts
+import { OnReuseDestroy, OnReuseInit, ReuseHookOnReuseInitType } from '@delon/abc/reuse-tab';
+
 @Component()
-export class DemoComponent {
-  _onReuseInit() {
-    console.log('_onReuseInit');
+export class DemoComponent implements OnReuseInit, OnReuseDestroy {
+  _onReuseInit(type: ReuseHookOnReuseInitType) {
+    console.log('_onReuseInit', type);
   }
   _onReuseDestroy() {
     console.log('_onReuseDestroy');
@@ -194,13 +205,13 @@ export class DemoComponent {
 | `[keepingScrollContainer]` | 保持滚动条容器 | `string | Element` | `window` |
 | `[excludes]` | 排除规则，限 `mode=URL` | `RegExp[]` | - |
 | `[allowClose]` | 允许关闭 | `boolean` | `true` |
-| `[showCurrent]` | 总是显示当前页 | `boolean` | `true` |
 | `[customContextMenu]` | 自定义右键菜单 | `ReuseCustomContextMenu[]` | - |
 | `[tabBarExtraContent]` | tab bar 上额外的元素 | `TemplateRef<void>` | - |
 | `[tabBarStyle]` | tab bar 的样式对象 | `object` | - |
 | `[tabBarGutter]` | tabs 之间的间隙 | `number` | - |
 | `[tabType]` | tabs 页签的基本样式 | `line, card` | `line` |
 | `[tabMaxWidth]` | tabs 页签每一项最大宽度，单位：`px` | `number` | - |
+| `[routeParamMatchMode]` | 包含路由参数时匹配模式，例如：`/view/:id`<br> - `strict` 严格模式 `/view/1`、`/view/2` 不同页<br> - `loose` 宽松模式 `/view/1`、`/view/2` 相同页且只呈现一个标签 | `strict,loose` | `strict` |
 | `(close)` | 关闭回调 | `EventEmitter` | - |
 | `(change)` | 切换时回调，接收的参数至少包含：`active`、`list` 两个参数 | `EventEmitter` | - |
 

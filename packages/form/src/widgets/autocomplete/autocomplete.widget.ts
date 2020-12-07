@@ -1,8 +1,8 @@
-import { AfterViewInit, Component, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
 import { NgModel } from '@angular/forms';
 import { NzAutocompleteOptionComponent } from 'ng-zorro-antd/auto-complete';
 import { Observable, of } from 'rxjs';
-import { debounceTime, flatMap, map, startWith } from 'rxjs/operators';
+import { debounceTime, map, mergeMap, startWith } from 'rxjs/operators';
 import { SFValue } from '../../interface';
 import { SFSchemaEnum } from '../../schema';
 import { getCopyEnum, getEnum, toBool } from '../../utils';
@@ -15,7 +15,7 @@ import { SFAutoCompleteWidgetSchema } from './schema';
   preserveWhitespaces: false,
   encapsulation: ViewEncapsulation.None,
 })
-export class AutoCompleteWidget extends ControlUIWidget<SFAutoCompleteWidgetSchema> implements AfterViewInit {
+export class AutoCompleteWidget extends ControlUIWidget<SFAutoCompleteWidgetSchema> {
   i: any = {};
   list: Observable<SFSchemaEnum[]>;
   typing: string = '';
@@ -24,13 +24,24 @@ export class AutoCompleteWidget extends ControlUIWidget<SFAutoCompleteWidgetSche
   private isAsync = false;
   private fixData: SFSchemaEnum[] = [];
 
-  updateValue(item: NzAutocompleteOptionComponent) {
-    this.typing = item.nzLabel;
-    this.setValue(item.nzValue);
-    if (this.ui.change) this.ui.change(item);
+  updateValue(item: NzAutocompleteOptionComponent): void {
+    this.typing = item.nzLabel!;
+    const data: SFSchemaEnum = item.nzValue;
+    this.setValue(data.value);
+    if (this.ui.change) {
+      this.ui.change(item, data);
+    }
   }
 
-  ngAfterViewInit(): void {
+  _setValue(item: SFSchemaEnum): void {
+    let val = item.toString();
+    if (typeof item !== 'string') {
+      val = item.value;
+    }
+    this.setValue(val);
+  }
+
+  afterViewInit(): void {
     const { backfill, defaultActiveFirstOption, nzWidth, filterOption, asyncData } = this.ui;
     this.i = {
       backfill: toBool(backfill, false),
@@ -51,12 +62,12 @@ export class AutoCompleteWidget extends ControlUIWidget<SFAutoCompleteWidgetSche
     this.list = this.ngModel.valueChanges!.pipe(
       debounceTime(time),
       startWith(''),
-      flatMap(input => (this.isAsync ? asyncData!(input) : this.filterData(input))),
+      mergeMap(input => (this.isAsync ? asyncData!(input) : this.filterData(input))),
       map(res => getEnum(res, null, this.schema.readOnly!)),
     );
   }
 
-  reset(value: SFValue) {
+  reset(value: SFValue): void {
     this.typing = this.value;
     if (this.isAsync) return;
     switch (this.ui.type) {
@@ -69,7 +80,7 @@ export class AutoCompleteWidget extends ControlUIWidget<SFAutoCompleteWidgetSche
     }
   }
 
-  private filterData(input: string) {
+  private filterData(input: string): Observable<SFSchemaEnum[]> | Observable<string[]> {
     switch (this.ui.type) {
       case 'email':
         return this.addEmailSuffix(input);
@@ -78,7 +89,7 @@ export class AutoCompleteWidget extends ControlUIWidget<SFAutoCompleteWidgetSche
     }
   }
 
-  private addEmailSuffix(value: string) {
+  private addEmailSuffix(value: string): Observable<string[]> {
     return of(!value || ~value.indexOf('@') ? [] : this.fixData.map(domain => `${value}@${domain.label}`));
   }
 }

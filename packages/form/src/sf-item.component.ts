@@ -21,6 +21,7 @@ let nextUniqueId = 0;
 @Component({
   selector: 'sf-item',
   exportAs: 'sfItem',
+  host: { '[class.sf__item]': 'true' },
   template: ` <ng-template #target></ng-template> `,
   preserveWhitespaces: false,
   encapsulation: ViewEncapsulation.None,
@@ -37,7 +38,7 @@ export class SFItemComponent implements OnInit, OnChanges, OnDestroy {
 
   constructor(private widgetFactory: WidgetFactory, private terminator: TerminatorService) {}
 
-  onWidgetInstanciated(widget: Widget<FormProperty, SFUISchemaItem>) {
+  onWidgetInstanciated(widget: Widget<FormProperty, SFUISchemaItem>): void {
     this.widget = widget;
     const id = `_sf-${nextUniqueId++}`;
 

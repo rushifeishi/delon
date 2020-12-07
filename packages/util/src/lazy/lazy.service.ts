@@ -6,8 +6,7 @@ import { filter, share } from 'rxjs/operators';
 
 export interface LazyResult {
   path: string;
-  loaded: boolean;
-  status: 'ok' | 'error';
+  status: 'ok' | 'error' | 'loading';
   error?: {};
 }
 
@@ -57,7 +56,7 @@ export class LazyService {
   loadScript(path: string, innerContent?: string): Promise<LazyResult> {
     return new Promise(resolve => {
       if (this.list[path] === true) {
-        resolve(this.cached[path]);
+        resolve({ ...this.cached[path], status: 'loading' });
         return;
       }
 
@@ -65,6 +64,7 @@ export class LazyService {
       const onSuccess = (item: LazyResult) => {
         this.cached[path] = item;
         resolve(item);
+        this._notify.next([item]);
       };
 
       const node = this.doc.createElement('script') as NzSafeAny;
@@ -81,7 +81,6 @@ export class LazyService {
             node.onreadystatechange = null;
             onSuccess({
               path,
-              loaded: true,
               status: 'ok',
             });
           }
@@ -90,14 +89,12 @@ export class LazyService {
         node.onload = () =>
           onSuccess({
             path,
-            loaded: true,
             status: 'ok',
           });
       }
       node.onerror = (error: {}) =>
         onSuccess({
           path,
-          loaded: false,
           status: 'error',
           error,
         });
@@ -124,7 +121,6 @@ export class LazyService {
       this.doc.getElementsByTagName('head')[0].appendChild(node);
       const item: LazyResult = {
         path,
-        loaded: true,
         status: 'ok',
       };
       this.cached[path] = item;

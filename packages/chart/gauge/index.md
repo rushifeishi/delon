@@ -2,8 +2,8 @@
 title: g2-gauge
 subtitle: 仪表盘
 cols: 1
-module: G2GaugeModule
 type: Components
+module: import { G2GaugeModule } from '@delon/chart/gauge';
 ---
 
 一种进度展示方式，可以更直观的展示当前的进展情况，通常也可表示占比。
@@ -12,8 +12,8 @@ type: Components
 
 ### g2-gauge
 
-| 参数      | 说明           | 类型         | 默认值 |
-|----------|----------------|-------------|-------|
+| 参数 | 说明 | 类型 | 默认值 |
+|----|----|----|-----|
 | `[delay]` | 延迟渲染，单位：毫秒 | `number` | `0` |
 | `[title]` | 图表标题 | `string` | - |
 | `[height]` | 图表高度 | `number` | - |

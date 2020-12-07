@@ -6,6 +6,7 @@ yarn-error.log
 /coverage
 /coverage-report
 /junit
+/archive-docs
 
 .tmp
 .lib
@@ -19,7 +20,10 @@ report.*.json
 
 src/app/routes/gen
 src/assets/color.less
+src/assets/style.compact.css
+src/assets/style.dark.css
 /scaffold
 /_scaffold
 /ng-alain
 /integration
+scripts/build/var.less

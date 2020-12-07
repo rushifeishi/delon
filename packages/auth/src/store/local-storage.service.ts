@@ -7,6 +7,11 @@ export function DA_STORE_TOKEN_LOCAL_FACTORY(): IStore {
 
 /**
  * `localStorage` storage, **not lost after closing the browser**.
+ *
+ * ```ts
+ * // global-config.module.ts
+ * { provide: DA_STORE_TOKEN, useClass: LocalStorageStore }
+ * ```
  */
 export class LocalStorageStore implements IStore {
   get(key: string): ITokenModel {
@@ -18,7 +23,7 @@ export class LocalStorageStore implements IStore {
     return true;
   }
 
-  remove(key: string) {
+  remove(key: string): void {
     localStorage.removeItem(key);
   }
 }

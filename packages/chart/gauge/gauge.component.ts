@@ -1,3 +1,4 @@
+import { Platform } from '@angular/cdk/platform';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -9,9 +10,8 @@ import {
   OnInit,
   ViewEncapsulation,
 } from '@angular/core';
-import { Chart, registerShape } from '@antv/g2';
-import { LooseObject } from '@antv/g2/lib/interface';
-import { AlainConfigService, InputNumber } from '@delon/util';
+import { Chart, registerShape, Types } from '@antv/g2';
+import { AlainConfigService, InputNumber, NumberInput } from '@delon/util';
 import { NzSafeAny } from 'ng-zorro-antd/core/types';
 
 @Component({
@@ -26,7 +26,15 @@ import { NzSafeAny } from 'ng-zorro-antd/core/types';
   encapsulation: ViewEncapsulation.None,
 })
 export class G2GaugeComponent implements OnInit, OnDestroy, OnChanges {
-  private chart: Chart;
+  static ngAcceptInputType_delay: NumberInput;
+  static ngAcceptInputType_height: NumberInput;
+  static ngAcceptInputType_percent: NumberInput;
+
+  private _chart: Chart;
+
+  get chart(): Chart {
+    return this._chart;
+  }
 
   // #region fields
 
@@ -34,21 +42,22 @@ export class G2GaugeComponent implements OnInit, OnDestroy, OnChanges {
   @Input() title: string;
   @Input() @InputNumber() height: number;
   @Input() color = '#2f9cff';
-  @Input() bgColor = '#f0f2f5';
+  @Input() bgColor: string; // = '#f0f2f5';
   @Input() format: (text: string, item: {}, index: number) => string;
   @Input() @InputNumber() percent: number;
   @Input() padding: number | number[] | 'auto' = [10, 10, 30, 10];
-  @Input() theme: string | LooseObject;
+  @Input() theme: string | Types.LooseObject;
 
   // #endregion
 
-  constructor(private el: ElementRef, private ngZone: NgZone, configSrv: AlainConfigService) {
+  constructor(private el: ElementRef, private ngZone: NgZone, configSrv: AlainConfigService, private platform: Platform) {
     configSrv.attachKey(this, 'chart', 'theme');
   }
 
-  private install() {
+  private install(): void {
     // 自定义Shape 部分
     registerShape('point', 'pointer', {
+      // tslint:disable-next-line: typedef
       draw(cfg, container) {
         const group = container.addGroup({});
         // 获取极坐标系下画布中心点
@@ -81,7 +90,7 @@ export class G2GaugeComponent implements OnInit, OnDestroy, OnChanges {
 
     const { el, height, padding, format, theme } = this;
 
-    const chart = (this.chart = new Chart({
+    const chart = (this._chart = new Chart({
       container: el.nativeElement,
       autoFit: true,
       height,
@@ -106,7 +115,7 @@ export class G2GaugeComponent implements OnInit, OnDestroy, OnChanges {
     chart.axis('value', {
       line: null,
       label: {
-        offset: -12,
+        offset: -14,
         formatter: format,
       },
       tickLine: null,
@@ -117,16 +126,16 @@ export class G2GaugeComponent implements OnInit, OnDestroy, OnChanges {
     this.attachChart();
   }
 
-  private attachChart() {
-    const { chart, percent, color, bgColor, title } = this;
-    if (!chart) return;
+  private attachChart(): void {
+    const { _chart, percent, color, bgColor, title } = this;
+    if (!_chart) return;
 
     const data = [{ name: title, value: percent }];
     const val = data[0].value;
-    chart.annotation().clear(true);
-    chart.geometries[0].color(color);
+    _chart.annotation().clear(true);
+    _chart.geometries[0].color(color);
     // 绘制仪表盘背景
-    chart.annotation().arc({
+    _chart.annotation().arc({
       top: false,
       start: [0, 0.95],
       end: [100, 0.95],
@@ -136,7 +145,7 @@ export class G2GaugeComponent implements OnInit, OnDestroy, OnChanges {
         lineDash: null,
       },
     });
-    chart.annotation().arc({
+    _chart.annotation().arc({
       start: [0, 0.95],
       end: [data[0].value, 0.95],
       style: {
@@ -146,8 +155,7 @@ export class G2GaugeComponent implements OnInit, OnDestroy, OnChanges {
       },
     });
 
-    // 绘制指标数字
-    chart.annotation().text({
+    _chart.annotation().text({
       position: ['50%', '85%'],
       content: title,
       style: {
@@ -156,21 +164,26 @@ export class G2GaugeComponent implements OnInit, OnDestroy, OnChanges {
         textAlign: 'center',
       },
     });
-    chart.annotation().text({
+    _chart.annotation().text({
       position: ['50%', '90%'],
       content: `${val} %`,
       style: {
-        fontSize: 24,
+        fontSize: 20,
         fill: 'rgba(0, 0, 0, 0.85)',
         textAlign: 'center',
       },
       offsetY: 15,
     });
 
-    chart.changeData(data);
+    _chart.changeData(data);
+    _chart.render();
   }
 
   ngOnInit(): void {
+    if (!this.platform.isBrowser) {
+      return;
+    }
+
     this.ngZone.runOutsideAngular(() => setTimeout(() => this.install(), this.delay));
   }
 
@@ -179,8 +192,8 @@ export class G2GaugeComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   ngOnDestroy(): void {
-    if (this.chart) {
-      this.ngZone.runOutsideAngular(() => this.chart.destroy());
+    if (this._chart) {
+      this.ngZone.runOutsideAngular(() => this._chart.destroy());
     }
   }
 }

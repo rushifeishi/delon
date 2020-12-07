@@ -23,13 +23,13 @@ export class CountDownComponent {
   set target(value: number | Date) {
     this.config = {
       format: `HH:mm:ss`,
-      stopTime: typeof value === 'number' ? addSeconds(new Date(), value).valueOf() : +format(value, 'x'),
+      stopTime: typeof value === 'number' ? addSeconds(new Date(), value).valueOf() : +format(value, 't'),
     };
   }
 
   @Output() readonly event = new EventEmitter<CountdownEvent>();
 
-  handleEvent(e: CountdownEvent) {
+  handleEvent(e: CountdownEvent): void {
     this.event.emit(e);
   }
 }

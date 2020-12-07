@@ -138,63 +138,58 @@ describe('theme: DrawerHelper', () => {
         expect((els[0] as HTMLElement).style.height).toBe(`100px`);
       });
     });
+    it('should be ingore drawer-sm when nzWidth has set', () => {
+      drawer
+        .static(
+          '',
+          TestDrawerComponent,
+          {
+            ret: 'true',
+          },
+          {
+            size: 'sm',
+            drawerOptions: {
+              nzWidth: 100,
+              nzWrapClassName: 'aaa',
+            },
+          },
+        )
+        .subscribe();
+      fixture.detectChanges();
+      const els = document.getElementsByClassName('aaa');
+      expect(els.length).toBe(1);
+      expect((els[0] as HTMLElement).classList).not.toContain('drawer-sm');
+    });
   });
 
   describe('#footer', () => {
-    describe('with true', () => {
-      it('when nzPlacement is right', () => {
-        const footerHeight = 100;
-        drawer
-          .static(
-            '',
-            TestDrawerComponent,
-            {
-              ret: 'true',
+    it('with true', () => {
+      const height = 300;
+      const footerHeight = 55;
+      drawer
+        .static(
+          '',
+          TestDrawerComponent,
+          {
+            ret: 'true',
+          },
+          {
+            size: 100,
+            footer: true,
+            footerHeight,
+            drawerOptions: {
+              nzHeight: height,
+              nzWrapClassName: 'eee',
+              nzPlacement: 'top',
             },
-            {
-              size: 100,
-              footer: true,
-              footerHeight,
-              drawerOptions: {
-                nzWrapClassName: 'ccc',
-              },
-            },
-          )
-          .subscribe();
-        fixture.detectChanges();
-        const els = document.getElementsByClassName('ccc');
-        expect(els.length).toBe(1);
-        const bodyEl = (els[0] as HTMLElement).querySelector('.ant-drawer-body') as HTMLElement;
-        expect(bodyEl.style.height).toBe(`calc(100% - ${footerHeight * 2 - 2}px)`);
-      });
-      it('when nzPlacement is top', () => {
-        const height = 300;
-        const footerHeight = 55;
-        drawer
-          .static(
-            '',
-            TestDrawerComponent,
-            {
-              ret: 'true',
-            },
-            {
-              size: 100,
-              footer: true,
-              footerHeight,
-              drawerOptions: {
-                nzHeight: height,
-                nzWrapClassName: 'eee',
-                nzPlacement: 'top',
-              },
-            },
-          )
-          .subscribe();
-        fixture.detectChanges();
-        const els = document.getElementsByClassName('eee');
-        expect(els.length).toBe(1);
-        const bodyEl = (els[0] as HTMLElement).querySelector('.ant-drawer-body') as HTMLElement;
-        expect(bodyEl.style.height).toBe(`${height - (footerHeight * 2 - 2)}px`);
-      });
+          },
+        )
+        .subscribe();
+      fixture.detectChanges();
+      const els = document.getElementsByClassName('eee');
+      expect(els.length).toBe(1);
+      const bodyEl = (els[0] as HTMLElement).querySelector('.ant-drawer-body') as HTMLElement;
+      expect(bodyEl.style.paddingBottom).toBe(`${footerHeight + 24}px`);
     });
     it('with false', () => {
       drawer

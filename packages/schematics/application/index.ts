@@ -1,3 +1,4 @@
+import { Spinner } from '@angular-devkit/build-angular/src/utils/spinner';
 import { strings } from '@angular-devkit/core';
 import {
   apply,
@@ -16,11 +17,10 @@ import {
 import { NodePackageInstallTask } from '@angular-devkit/schematics/tasks';
 import * as path from 'path';
 import { getLangData } from '../core/lang.config';
-import { tryAddFile } from '../utils/alain';
-import { HMR_CONTENT } from '../utils/contents';
-import { addFiles } from '../utils/file';
+import { addFiles, overwriteFile } from '../utils/file';
 import { addHeadStyle, addHtmlToBody } from '../utils/html';
 import {
+  addAllowedCommonJsDependencies,
   addPackageToPackageJson,
   getAngular,
   getJSON,
@@ -36,9 +36,10 @@ import { Schema as ApplicationOptions } from './schema';
 
 const overwriteDataFileRoot = path.join(__dirname, 'overwrites');
 let project: Project;
+const spinner = new Spinner();
 
 /** Remove files to be overwrite */
-function removeOrginalFiles() {
+function removeOrginalFiles(): (host: Tree) => void {
   return (host: Tree) => {
     [
       `${project.root}/README.md`,
@@ -58,14 +59,7 @@ function removeOrginalFiles() {
   };
 }
 
-function fixMain() {
-  return (host: Tree) => {
-    // fix: main.ts using no hmr file
-    tryAddFile(host, `${project.sourceRoot}/main.ts`, HMR_CONTENT.NO_HMR_MAIN_DOT_TS);
-  };
-}
-
-function fixAngularJson(options: ApplicationOptions) {
+function fixAngularJson(options: ApplicationOptions): (host: Tree) => void {
   return (host: Tree) => {
     const json = getAngular(host);
     const _project = getProjectFromWorkspace(json, options.project);
@@ -78,7 +72,7 @@ function fixAngularJson(options: ApplicationOptions) {
   };
 }
 
-function addDependenciesToPackageJson(options: ApplicationOptions) {
+function addDependenciesToPackageJson(options: ApplicationOptions): (host: Tree) => void {
   return (host: Tree) => {
     // 3rd
     addPackageToPackageJson(host, [
@@ -101,9 +95,8 @@ function addDependenciesToPackageJson(options: ApplicationOptions) {
       [
         `ng-alain@${VERSION}`,
         `ng-alain-codelyzer@DEP-0.0.0-PLACEHOLDER`,
+        `ng-alain-plugin-theme@DEP-0.0.0-PLACEHOLDER`,
         `@delon/testing@${VERSION}`,
-        // color-less
-        `antd-theme-generator@DEP-0.0.0-PLACEHOLDER`,
       ],
       'devDependencies',
     );
@@ -111,26 +104,31 @@ function addDependenciesToPackageJson(options: ApplicationOptions) {
     if (options.i18n) {
       addPackageToPackageJson(host, [`@ngx-translate/core@DEP-0.0.0-PLACEHOLDER`, `@ngx-translate/http-loader@DEP-0.0.0-PLACEHOLDER`]);
     }
+    // Configuring CommonJS dependencies
+    // https://angular.io/guide/build#configuring-commonjs-dependencies
+    addAllowedCommonJsDependencies(host);
     return host;
   };
 }
 
-function addRunScriptToPackageJson() {
+function addRunScriptToPackageJson(): (host: Tree) => void {
   return (host: Tree) => {
     const json = getPackage(host, 'scripts');
     if (json == null) return host;
-    json.scripts.start = `npm run color-less && ng s -o`;
-    json.scripts.build = `npm run color-less && node --max_old_space_size=5120 ./node_modules/@angular/cli/bin/ng build --prod`;
-    json.scripts.analyze = `npm run color-less && node --max_old_space_size=5120 ./node_modules/@angular/cli/bin/ng build --prod --stats-json`;
+    json.scripts.start = `ng s -o`;
+    json.scripts.hmr = `ng s -o --hmr`;
+    json.scripts.build = `node --max_old_space_size=5120 ./node_modules/@angular/cli/bin/ng build --prod`;
+    json.scripts.analyze = `node --max_old_space_size=5120 ./node_modules/@angular/cli/bin/ng build --prod --stats-json`;
     json.scripts['test-coverage'] = `ng test --code-coverage --watch=false`;
-    json.scripts['color-less'] = `node scripts/color-less.js`;
+    json.scripts['color-less'] = `ng-alain-plugin-theme -t=colorLess`;
+    json.scripts.theme = `ng-alain-plugin-theme -t=themeCss`;
     json.scripts.icon = `ng g ng-alain:plugin icon`;
     overwritePackage(host, json);
     return host;
   };
 }
 
-function addPathsToTsConfig() {
+function addPathsToTsConfig(): (host: Tree) => Tree {
   return (host: Tree) => {
     const json = getJSON(host, 'tsconfig.json', 'compilerOptions');
     if (json == null) return host;
@@ -145,14 +143,14 @@ function addPathsToTsConfig() {
   };
 }
 
-function addCodeStylesToPackageJson() {
+function addCodeStylesToPackageJson(): (host: Tree) => Tree {
   return (host: Tree) => {
     const json = getPackage(host);
     if (json == null) return host;
     json.scripts.lint = `npm run lint:ts && npm run lint:style`;
     json.scripts['lint:ts'] = `ng lint --fix`;
     json.scripts['lint:style'] = `stylelint \"src/**/*.less\" --syntax less --fix`;
-    json.scripts['lint-staged'] = `lint-staged`;
+    json.scripts['pretty-quick'] = `pretty-quick`;
     json.scripts['tslint-check'] = `tslint-config-prettier-check ./tslint.json`;
     overwritePackage(host, json);
     // dependencies
@@ -161,10 +159,9 @@ function addCodeStylesToPackageJson() {
       [
         `tslint-config-prettier@DEP-0.0.0-PLACEHOLDER`,
         `tslint-language-service@DEP-0.0.0-PLACEHOLDER`,
-        `lint-staged@DEP-0.0.0-PLACEHOLDER`,
+        `pretty-quick@DEP-0.0.0-PLACEHOLDER`,
         `husky@DEP-0.0.0-PLACEHOLDER`,
         `prettier@DEP-0.0.0-PLACEHOLDER`,
-        `prettier-stylelint@DEP-0.0.0-PLACEHOLDER`,
         `stylelint@DEP-0.0.0-PLACEHOLDER`,
         `stylelint-config-prettier@DEP-0.0.0-PLACEHOLDER`,
         `stylelint-config-rational-order@DEP-0.0.0-PLACEHOLDER`,
@@ -178,7 +175,7 @@ function addCodeStylesToPackageJson() {
   };
 }
 
-function addSchematics() {
+function addSchematics(): (host: Tree) => Tree {
   return (host: Tree) => {
     const angularJsonFile = 'angular.json';
     const json = getJSON(host, angularJsonFile, 'schematics');
@@ -221,13 +218,29 @@ function addSchematics() {
   };
 }
 
-function forceLess() {
+function addNzLintRules(): (host: Tree) => void {
+  return (host: Tree) => {
+    addPackageToPackageJson(host, ['nz-tslint-rules@DEP-0.0.0-PLACEHOLDER'], 'devDependencies');
+
+    const json = getJSON(host, 'tslint.json');
+    if (json == null) return host;
+
+    json.rulesDirectory.push(`nz-tslint-rules`);
+    json.rules['nz-secondary-entry-imports'] = true;
+
+    overwriteJSON(host, 'tslint.json', json);
+
+    return host;
+  };
+}
+
+function forceLess(): (host: Tree) => void {
   return (host: Tree) => {
     scriptsToAngularJson(host, ['src/styles.less'], 'add', ['build'], null!, true);
   };
 }
 
-function addStyle() {
+function addStyle(): (host: Tree) => Tree {
   return (host: Tree) => {
     addHeadStyle(
       host,
@@ -237,7 +250,7 @@ function addStyle() {
     addHtmlToBody(
       host,
       project,
-      `  <div class="preloader"><div class="cs-loader"><div class="cs-loader-inner"><label>	●</label><label>	●</label><label>	●</label><label>	●</label><label>	●</label><label>	●</label></div></div>\n`,
+      `  <div class="preloader"><div class="cs-loader"><div class="cs-loader-inner"><label>	●</label><label>	●</label><label>	●</label><label>	●</label><label>	●</label><label>	●</label></div></div></div>\n`,
     );
     // add styles
     addFiles(host, [`${project.sourceRoot}/styles/index.less`, `${project.sourceRoot}/styles/theme.less`], overwriteDataFileRoot);
@@ -246,7 +259,7 @@ function addStyle() {
   };
 }
 
-function mergeFiles(options: ApplicationOptions, from: string, to: string) {
+function mergeFiles(options: ApplicationOptions, from: string, to: string): Rule {
   return mergeWith(
     apply(url(from), [
       options.i18n ? noop() : filter(p => p.indexOf('i18n') === -1),
@@ -263,68 +276,7 @@ function mergeFiles(options: ApplicationOptions, from: string, to: string) {
   );
 }
 
-function addCliTpl() {
-  const TPLS = {
-    '__name@dasherize__.component.html': `<page-header></page-header>`,
-    '__name@dasherize__.component.ts': `import { Component, OnInit<% if(!!viewEncapsulation) { %>, ViewEncapsulation<% }%><% if(changeDetection !== 'Default') { %>, ChangeDetectionStrategy<% }%> } from '@angular/core';
-import { _HttpClient } from '@delon/theme';
-import { NzMessageService } from 'ng-zorro-antd/message';
-
-@Component({
-  selector: '<%= selector %>',
-  templateUrl: './<%= dasherize(name) %>.component.html',<% if(!inlineStyle) { %><% } else { %>
-  styleUrls: ['./<%= dasherize(name) %>.component.<%= style %>']<% } %><% if(!!viewEncapsulation) { %>,
-  encapsulation: ViewEncapsulation.<%= viewEncapsulation %><% } if (changeDetection !== 'Default') { %>,
-  changeDetection: ChangeDetectionStrategy.<%= changeDetection %><% } %>
-})
-export class <%= componentName %> implements OnInit {
-
-  constructor(private http: _HttpClient, private msg: NzMessageService) { }
-
-  ngOnInit() { }
-
-}
-`,
-    '__name@dasherize__.component.spec.ts': `import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-  import { <%= componentName %> } from './<%= dasherize(name) %>.component';
-
-  describe('<%= componentName %>', () => {
-    let component: <%= componentName %>;
-    let fixture: ComponentFixture<<%= componentName %>>;
-
-    beforeEach(async(() => {
-      TestBed.configureTestingModule({
-        declarations: [ <%= componentName %> ]
-      })
-      .compileComponents();
-    }));
-
-    beforeEach(() => {
-      fixture = TestBed.createComponent(<%= componentName %>);
-      component = fixture.componentInstance;
-      fixture.detectChanges();
-    });
-
-    it('should create', () => {
-      expect(component).toBeTruthy();
-    });
-  });
-  `,
-  };
-  return (host: Tree) => {
-    const prefix = `${project.root}/_cli-tpl/test/__path__/__name@dasherize@if-flat__/`;
-    Object.keys(TPLS).forEach(name => {
-      const realPath = prefix + name;
-      if (host.exists(realPath)) {
-        host.overwrite(realPath, TPLS[name]);
-      } else {
-        host.create(realPath, TPLS[name]);
-      }
-    });
-  };
-}
-
-function addFilesToRoot(options: ApplicationOptions) {
+function addFilesToRoot(options: ApplicationOptions): Rule {
   return chain([
     mergeWith(
       apply(url('./files/src'), [
@@ -358,13 +310,13 @@ function addFilesToRoot(options: ApplicationOptions) {
   ]);
 }
 
-function fixLang(options: ApplicationOptions) {
+function fixLang(options: ApplicationOptions): (host: Tree) => void {
   return (host: Tree) => {
     if (options.i18n) return;
     const langs = getLangData(options.defaultLanguage!);
     if (!langs) return;
 
-    console.log(`Translating, please wait...`);
+    spinner.text = `Translating template into ${options.defaultLanguage} language, please wait...`;
 
     host.visit(p => {
       if (~p.indexOf(`/node_modules/`)) return;
@@ -374,7 +326,7 @@ function fixLang(options: ApplicationOptions) {
   };
 }
 
-function fixLangInHtml(host: Tree, p: string, langs: {}) {
+function fixLangInHtml(host: Tree, p: string, langs: {}): void {
   let html = host.get(p)!.content.toString('utf8');
   let matchCount = 0;
   // {{(status ? 'menu.fullscreen.exit' : 'menu.fullscreen') | translate }}
@@ -414,7 +366,7 @@ function fixLangInHtml(host: Tree, p: string, langs: {}) {
   }
 }
 
-function fixVsCode() {
+function fixVsCode(): (host: Tree) => void {
   return (host: Tree) => {
     const filePath = '.vscode/extensions.json';
     let json = getJSON(host, filePath);
@@ -427,24 +379,17 @@ function fixVsCode() {
   };
 }
 
-function installPackages() {
+function finished(): (_host: Tree, context: SchematicContext) => void {
   return (_host: Tree, context: SchematicContext) => {
     context.addTask(new NodePackageInstallTask());
-  };
-}
-
-function tips() {
-  return (_host: Tree) => {
-    console.warn(``);
-    console.warn(`Don't use cnpm to install dependencies, pls refer to: https://ng-alain.com/docs/faq#Installation`);
-    console.warn(`Don't use cnpm to install dependencies, pls refer to: https://ng-alain.com/docs/faq#Installation`);
+    spinner.succeed(`Congratulations, NG-ALAIN scaffold generation complete.`);
   };
 }
 
 export default function (options: ApplicationOptions): Rule {
   return (host: Tree, context: SchematicContext) => {
     project = getProject(host, options.project);
-
+    spinner.start(`Generating NG-ALAIN scaffold...`);
     return chain([
       // @delon/* dependencies
       addDependenciesToPackageJson(options),
@@ -454,19 +399,16 @@ export default function (options: ApplicationOptions): Rule {
       // code style
       addCodeStylesToPackageJson(),
       addSchematics(),
+      addNzLintRules(),
       // files
       removeOrginalFiles(),
       addFilesToRoot(options),
-      addCliTpl(),
-      fixMain(),
       forceLess(),
       addStyle(),
       fixLang(options),
       fixVsCode(),
       fixAngularJson(options),
-      installPackages(),
-      tips(),
-      // applyLintFix(),
+      finished(),
     ])(host, context);
   };
 }

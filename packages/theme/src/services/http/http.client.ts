@@ -19,10 +19,10 @@ export type HttpObserve = 'body' | 'events' | 'response';
 export class _HttpClient {
   private cog: AlainThemeHttpClientConfig;
   constructor(private http: HttpClient, cogSrv: AlainConfigService) {
-    this.cog = cogSrv.merge<AlainThemeHttpClientConfig, 'themeHttp'>('themeHttp', {
+    this.cog = cogSrv.merge('themeHttp', {
       nullValueHandling: 'include',
       dateValueHandling: 'timestamp',
-    });
+    })!;
   }
 
   private _loading = false;
@@ -34,6 +34,10 @@ export class _HttpClient {
 
   parseParams(params: NzSafeAny): HttpParams {
     const newParams: NzSafeAny = {};
+    if (params instanceof HttpParams) {
+      return params;
+    }
+
     Object.keys(params).forEach(key => {
       let _data = params[key];
       // 忽略空值
@@ -47,7 +51,7 @@ export class _HttpClient {
     return new HttpParams({ fromObject: newParams });
   }
 
-  appliedUrl(url: string, params?: NzSafeAny) {
+  appliedUrl(url: string, params?: NzSafeAny): string {
     if (!params) return url;
     url += ~url.indexOf('?') ? '' : '?';
     const arr: string[] = [];
@@ -58,11 +62,11 @@ export class _HttpClient {
     return url + arr.join('&');
   }
 
-  begin() {
+  begin(): void {
     Promise.resolve(null).then(() => (this._loading = true));
   }
 
-  end() {
+  end(): void {
     Promise.resolve(null).then(() => (this._loading = false));
   }
 

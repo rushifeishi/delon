@@ -2,8 +2,8 @@
 title: g2-chart
 subtitle: 自定义图表
 cols: 1
-module: G2CustomModule
 type: Components
+module: import { G2CustomModule } from '@delon/chart/custom';
 ---
 
 使用 `g2-custom` 组件可以更快速的封装自己的图表组件。
@@ -41,12 +41,12 @@ export class DemoComponent {
 
 ### g2-custom
 
-| 参数           | 说明                | 类型                       | 默认值 |
-|----------------|--------------------|----------------------------|--------|
-| `[delay]`      | 延迟渲染，单位：毫秒  | `number`                   | `0`    |
-| `[height]`     | 高                  | `number`                   | -      |
-| `[resizeTime]` | resize 事件去抖时长 | `number`                   | `200`  |
-| `(render)`     | 渲染事件            | `EventEmitter<ElementRef>` | -      |
-| `(resize)`     | resize 事件         | `EventEmitter<ElementRef>` | -      |
-| `(destroy)`    | 销毁事件            | `EventEmitter<ElementRef>` | -      |
+| 参数 | 说明 | 类型 | 默认值 |
+|----|----|----|-----|
+| `[delay]` | 延迟渲染，单位：毫秒 | `number` | `0` |
+| `[height]` | 高 | `number` | - |
+| `[resizeTime]` | resize 事件去抖时长 | `number` | `200` |
+| `(render)` | 渲染事件 | `EventEmitter<ElementRef>` | - |
+| `(resize)` | resize 事件 | `EventEmitter<ElementRef>` | - |
+| `(destroy)` | 销毁事件 | `EventEmitter<ElementRef>` | - |
 | `[theme]` | 定制图表主题 | `string | LooseObject` | - |

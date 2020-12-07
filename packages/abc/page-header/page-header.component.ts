@@ -1,3 +1,4 @@
+import { Platform } from '@angular/cdk/platform';
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -18,7 +19,7 @@ import {
 import { NavigationEnd, Router } from '@angular/router';
 import { ReuseTabService } from '@delon/abc/reuse-tab';
 import { AlainI18NService, ALAIN_I18N_TOKEN, Menu, MenuService, SettingsService, TitleService } from '@delon/theme';
-import { AlainConfigService, AlainPageHeaderConfig, InputBoolean, InputNumber, isEmpty } from '@delon/util';
+import { AlainConfigService, BooleanInput, InputBoolean, InputNumber, isEmpty, NumberInput } from '@delon/util';
 import { NzAffixComponent } from 'ng-zorro-antd/affix';
 import { merge, Subject } from 'rxjs';
 import { filter, takeUntil } from 'rxjs/operators';
@@ -37,19 +38,23 @@ interface PageHeaderPath {
   encapsulation: ViewEncapsulation.None,
 })
 export class PageHeaderComponent implements OnInit, OnChanges, AfterViewInit, OnDestroy {
-  private inited = false;
+  static ngAcceptInputType_loading: BooleanInput;
+  static ngAcceptInputType_wide: BooleanInput;
+  static ngAcceptInputType_autoBreadcrumb: BooleanInput;
+  static ngAcceptInputType_autoTitle: BooleanInput;
+  static ngAcceptInputType_syncTitle: BooleanInput;
+  static ngAcceptInputType_fixed: BooleanInput;
+  static ngAcceptInputType_fixedOffsetTop: NumberInput;
+  static ngAcceptInputType_recursiveBreadcrumb: BooleanInput;
+
+  inited = false;
   private unsubscribe$ = new Subject<void>();
   @ViewChild('conTpl', { static: false }) private conTpl: ElementRef;
   @ViewChild('affix', { static: false }) private affix: NzAffixComponent;
-  private _menus: Menu[] | null;
+  isBrowser = true;
 
-  private get menus() {
-    if (this._menus) {
-      return this._menus;
-    }
-    this._menus = this.menuSrv.getPathByUrl(this.router.url.split('?')[0], this.recursiveBreadcrumb);
-
-    return this._menus;
+  private get menus(): Menu[] {
+    return this.menuSrv.getPathByUrl(this.router.url, this.recursiveBreadcrumb);
   }
 
   _titleVal: string = '';
@@ -101,8 +106,10 @@ export class PageHeaderComponent implements OnInit, OnChanges, AfterViewInit, On
     @Optional() @Inject(ReuseTabService) private reuseSrv: ReuseTabService,
     private cdr: ChangeDetectorRef,
     configSrv: AlainConfigService,
+    platform: Platform,
   ) {
-    configSrv.attach<AlainPageHeaderConfig, 'pageHeader'>(this, 'pageHeader', {
+    this.isBrowser = platform.isBrowser;
+    configSrv.attach(this, 'pageHeader', {
       home: '首页',
       homeLink: '/',
       autoBreadcrumb: true,
@@ -119,20 +126,17 @@ export class PageHeaderComponent implements OnInit, OnChanges, AfterViewInit, On
       )
       .subscribe(() => this.affix.updatePosition({} as any));
 
-    merge(menuSrv.change.pipe(filter(() => this.inited)), router.events.pipe(filter(e => e instanceof NavigationEnd)), i18nSrv.change)
+    merge(menuSrv.change.pipe(filter(() => this.inited)), router.events.pipe(filter(ev => ev instanceof NavigationEnd)), i18nSrv.change)
       .pipe(takeUntil(this.unsubscribe$))
-      .subscribe(() => {
-        this._menus = null;
-        this.refresh();
-      });
+      .subscribe(() => this.refresh());
   }
 
-  refresh() {
+  refresh(): void {
     this.setTitle().genBreadcrumb();
     this.cdr.detectChanges();
   }
 
-  private genBreadcrumb() {
+  private genBreadcrumb(): void {
     if (this.breadcrumb || !this.autoBreadcrumb || this.menus.length <= 0) {
       this.paths = [];
       return;
@@ -152,14 +156,15 @@ export class PageHeaderComponent implements OnInit, OnChanges, AfterViewInit, On
       });
     }
     this.paths = paths;
-    return this;
   }
 
-  private setTitle() {
+  private setTitle(): this {
     if (this._title == null && this._titleTpl == null && this.autoTitle && this.menus.length > 0) {
       const item = this.menus[this.menus.length - 1];
       let title = item.text;
-      if (item.i18n && this.i18nSrv) title = this.i18nSrv.fanyi(item.i18n);
+      if (item.i18n && this.i18nSrv) {
+        title = this.i18nSrv.fanyi(item.i18n);
+      }
       this._titleVal = title!;
     }
 
@@ -167,7 +172,7 @@ export class PageHeaderComponent implements OnInit, OnChanges, AfterViewInit, On
       if (this.titleSrv) {
         this.titleSrv.setTitle(this._titleVal);
       }
-      if (this.reuseSrv) {
+      if (!this.inited && this.reuseSrv) {
         this.reuseSrv.title = this._titleVal;
       }
     }
@@ -175,7 +180,7 @@ export class PageHeaderComponent implements OnInit, OnChanges, AfterViewInit, On
     return this;
   }
 
-  checkContent() {
+  checkContent(): void {
     if (isEmpty(this.conTpl.nativeElement)) {
       this.renderer.setAttribute(this.conTpl.nativeElement, 'hidden', '');
     } else {
@@ -183,7 +188,7 @@ export class PageHeaderComponent implements OnInit, OnChanges, AfterViewInit, On
     }
   }
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.refresh();
     this.inited = true;
   }
@@ -193,7 +198,9 @@ export class PageHeaderComponent implements OnInit, OnChanges, AfterViewInit, On
   }
 
   ngOnChanges(): void {
-    if (this.inited) this.refresh();
+    if (this.inited) {
+      this.refresh();
+    }
   }
 
   ngOnDestroy(): void {

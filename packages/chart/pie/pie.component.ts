@@ -1,27 +1,34 @@
+import { Platform } from '@angular/cdk/platform';
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
   ElementRef,
+  EventEmitter,
   Input,
   NgZone,
   OnChanges,
   OnDestroy,
   OnInit,
+  Output,
   TemplateRef,
   ViewChild,
   ViewEncapsulation,
 } from '@angular/core';
-import { Chart } from '@antv/g2';
-import { LooseObject } from '@antv/g2/lib/interface';
-import { InteractionType } from '@delon/chart/core/types';
-import { AlainConfigService, InputBoolean, InputNumber } from '@delon/util';
+import { Chart, Event, Types } from '@antv/g2';
+import { G2InteractionType } from '@delon/chart/core';
+import { AlainConfigService, BooleanInput, InputBoolean, InputNumber, NumberInput } from '@delon/util';
 import { NzSafeAny } from 'ng-zorro-antd/core/types';
 
 export interface G2PieData {
   x: any;
   y: number;
   [key: string]: any;
+}
+
+export interface G2PieClickItem {
+  item: G2PieData;
+  ev: Event;
 }
 
 @Component({
@@ -39,11 +46,21 @@ export interface G2PieData {
   encapsulation: ViewEncapsulation.None,
 })
 export class G2PieComponent implements OnInit, OnDestroy, OnChanges {
+  static ngAcceptInputType_delay: NumberInput;
+  static ngAcceptInputType_height: NumberInput;
+  static ngAcceptInputType_animate: BooleanInput;
+  static ngAcceptInputType_hasLegend: BooleanInput;
+  static ngAcceptInputType_percent: NumberInput;
+  static ngAcceptInputType_tooltip: BooleanInput;
+  static ngAcceptInputType_lineWidth: NumberInput;
+  static ngAcceptInputType_blockMaxWidth: NumberInput;
+  static ngAcceptInputType_select: BooleanInput;
+
   @ViewChild('container', { static: true }) private node: ElementRef;
-  private chart: Chart;
-  private isPercent: boolean;
+  private _chart: Chart;
   private percentColor: (value: string) => string;
   legendData: NzSafeAny[] = [];
+  isPercent: boolean;
 
   // #region fields
 
@@ -64,20 +81,31 @@ export class G2PieComponent implements OnInit, OnDestroy, OnChanges {
   @Input() valueFormat: (y: number) => string;
   @Input() data: G2PieData[] = [];
   @Input() colors: any[];
-  @Input() interaction: InteractionType = 'none';
-  @Input() theme: string | LooseObject;
+  @Input() interaction: G2InteractionType = 'none';
+  @Input() theme: string | Types.LooseObject;
+  @Output() clickItem = new EventEmitter<G2PieClickItem>();
 
   // #endregion
 
-  get block() {
+  get block(): boolean {
     return this.hasLegend && this.el.nativeElement.clientWidth <= this.blockMaxWidth;
   }
 
-  constructor(public el: ElementRef<HTMLElement>, private ngZone: NgZone, private cdr: ChangeDetectorRef, configSrv: AlainConfigService) {
+  get chart(): Chart {
+    return this._chart;
+  }
+
+  constructor(
+    private el: ElementRef<HTMLElement>,
+    private ngZone: NgZone,
+    private cdr: ChangeDetectorRef,
+    configSrv: AlainConfigService,
+    private platform: Platform,
+  ) {
     configSrv.attachKey(this, 'chart', 'theme');
   }
 
-  private fixData() {
+  private fixData(): void {
     const { percent, color } = this;
     this.isPercent = percent != null;
     if (this.isPercent) {
@@ -97,9 +125,9 @@ export class G2PieComponent implements OnInit, OnDestroy, OnChanges {
     }
   }
 
-  private install() {
+  private install(): void {
     const { node, height, padding, tooltip, inner, hasLegend, interaction, theme } = this;
-    const chart = (this.chart = new Chart({
+    const chart = (this._chart = new Chart({
       container: node.nativeElement,
       autoFit: true,
       height,
@@ -130,18 +158,22 @@ export class G2PieComponent implements OnInit, OnDestroy, OnChanges {
       }))
       .state({});
 
+    chart.on(`interval:click`, (ev: Event) => {
+      this.ngZone.run(() => this.clickItem.emit({ item: ev.data?.data, ev }));
+    });
+
     this.attachChart();
   }
 
-  private attachChart() {
-    const { chart, height, padding, animate, data, lineWidth, isPercent, percentColor, colors } = this;
-    if (!chart) return;
+  private attachChart(): void {
+    const { _chart, height, padding, animate, data, lineWidth, isPercent, percentColor, colors } = this;
+    if (!_chart) return;
 
-    chart.height = height;
-    chart.padding = padding;
-    chart.animate(animate);
-    chart.geometries[0].style({ lineWidth, stroke: '#fff' }).color('x', isPercent ? percentColor : colors);
-    chart.scale({
+    _chart.height = height;
+    _chart.padding = padding;
+    _chart.animate(animate);
+    _chart.geometries[0].style({ lineWidth, stroke: '#fff' }).color('x', isPercent ? percentColor : colors);
+    _chart.scale({
       x: {
         type: 'cat',
         range: [0, 1],
@@ -152,16 +184,17 @@ export class G2PieComponent implements OnInit, OnDestroy, OnChanges {
     for (const item of data) {
       item.percent = totalSum === 0 ? 0 : item.y / totalSum;
     }
-    chart.changeData(data);
+    _chart.changeData(data);
+    _chart.render();
 
     this.ngZone.run(() => this.genLegend());
   }
 
-  private genLegend() {
-    const { hasLegend, isPercent, cdr, chart } = this;
+  private genLegend(): void {
+    const { hasLegend, isPercent, cdr, _chart } = this;
     if (!hasLegend || isPercent) return;
 
-    this.legendData = chart.geometries[0].dataArray.map((item: any) => {
+    this.legendData = _chart.geometries[0].dataArray.map((item: any) => {
       const origin = item[0]._origin;
       origin.color = item[0].color;
       origin.checked = true;
@@ -172,13 +205,16 @@ export class G2PieComponent implements OnInit, OnDestroy, OnChanges {
     cdr.detectChanges();
   }
 
-  _click(i: number) {
-    const { legendData, chart } = this;
+  _click(i: number): void {
+    const { legendData, _chart } = this;
     legendData[i].checked = !legendData[i].checked;
-    chart.render();
+    _chart.render();
   }
 
   ngOnInit(): void {
+    if (!this.platform.isBrowser) {
+      return;
+    }
     this.ngZone.runOutsideAngular(() => setTimeout(() => this.install(), this.delay));
   }
 
@@ -188,8 +224,8 @@ export class G2PieComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   ngOnDestroy(): void {
-    if (this.chart) {
-      this.ngZone.runOutsideAngular(() => this.chart.destroy());
+    if (this._chart) {
+      this.ngZone.runOutsideAngular(() => this._chart.destroy());
     }
   }
 }

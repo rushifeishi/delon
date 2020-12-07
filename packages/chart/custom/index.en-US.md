@@ -2,8 +2,8 @@
 title: g2-chart
 subtitle: Custom Chart
 cols: 1
-module: G2CustomModule
 type: Components
+module: import { G2CustomModule } from '@delon/chart/custom';
 ---
 
 Use `g2-custom` component to package your G2 chart.
@@ -41,12 +41,12 @@ If throw error `G2` not found, please refer to [Frequently Asked Questions](/cha
 
 ### g2-custom
 
-| Property       | Description                 | Type                       | Default |
-|----------------|-----------------------------|----------------------------|---------|
-| `[delay]`      | Delayed rendering, unit: ms | `number`                   | `0`     |
-| `[height]`     | Height of chart container   | `number`                   | -       |
-| `[resizeTime]` | Resize event debounce time  | `number`                   | `200`   |
-| `(render)`     | Render event                | `EventEmitter<ElementRef>` | -       |
-| `(resize)`     | Resize event                | `EventEmitter<ElementRef>` | -       |
-| `(destroy)`    | Destroy event               | `EventEmitter<ElementRef>` | -       |
+| Property | Description | Type | Default |
+|----------|-------------|------|---------|
+| `[delay]` | Delayed rendering, unit: ms | `number` | `0` |
+| `[height]` | Height of chart container | `number` | - |
+| `[resizeTime]` | Resize event debounce time | `number` | `200` |
+| `(render)` | Render event | `EventEmitter<ElementRef>` | - |
+| `(resize)` | Resize event | `EventEmitter<ElementRef>` | - |
+| `(destroy)` | Destroy event | `EventEmitter<ElementRef>` | - |
 | `[theme]` | Custom chart theme | `string | LooseObject` | - |

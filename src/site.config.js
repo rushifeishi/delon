@@ -1,7 +1,7 @@
 module.exports = {
   defaultLang: 'zh-CN',
   langs: ['zh-CN', 'en-US'],
-  tocMaxDepth: 3, // toc max depth
+  tocMaxDepth: 2, // toc max depth
   template: {
     examples: './src/templates/examples.ts',
     examples_index: './src/templates/examples_index.ts',
@@ -562,7 +562,7 @@ module.exports = {
           hasSubDir: false,
         },
         {
-          src: ['./packages/theme/styles/layout'],
+          src: ['./packages/theme/layout'],
           template: {
             content: './src/templates/content.ts',
           },

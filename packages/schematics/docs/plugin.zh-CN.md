@@ -35,7 +35,7 @@ ng g ng-alain:plugin [plugin name] -t=[add | remove]
 - 使用 [tslint](https://github.com/palantir/tslint) 校验 typescript 部分
 - 使用 [stylelint](https://github.com/stylelint/stylelint) 校验 less 部分
 - 使用 [prettier](https://github.com/prettier/prettier) 代码格式化
-- 使用 [husky](https://github.com/typicode/husky) 和 [lint-staged](https://github.com/okonet/lint-staged) 在你提交代码时进行代码校验和格式化
+- 使用 [husky](https://github.com/typicode/husky) 和 [pretty-quick](https://github.com/azz/pretty-quick) 在你提交代码时进行代码校验和格式化
 
 ng-alain 默认提供了一部分的代码风格配置方案，你可以在项目的根目录下找到这些配置信息，依照你自己的风格进行修饰。
 
@@ -44,23 +44,6 @@ ng-alain 默认提供了一部分的代码风格配置方案，你可以在项�
 ng g ng-alain:plugin codeStyle
 # remove
 ng g ng-alain:plugin codeStyle -t=remove
-```
-
-### hmr
-
-支持 HMR 热替换。
-
-```bash
-# add
-ng g ng-alain:plugin hmr
-# remove
-ng g ng-alain:plugin hmr -t=remove
-```
-
-安装后可使用启用 HMR 模式进入开发环境：
-
-```bash
-npm run hmr
 ```
 
 ### ie
@@ -74,7 +57,7 @@ ng g ng-alain:plugin ie
 ng g ng-alain:plugin ie -t=remove
 ```
 
-安装后可使用 `npm run ie:start` 或 `npm run ie:hmr` 进入IE11的开发环境。
+安装后可使用 `npm run ie:start` 进入IE11的开发环境。
 
 ### docker
 
@@ -102,16 +85,17 @@ ng g ng-alain:plugin defaultLanguage --defaultLanguage=zh-tw
 
 #### 支持语言列表
 
-| 名称     | 语言包名称                  | 对应 [Angular](https://github.com/angular/angular/tree/master/packages/common/locales) 语言包         | 对应 [Zorro](http://ng.ant.design/docs/i18n/zh#%E6%94%AF%E6%8C%81%E8%AF%AD%E8%A8%80) 语言包 | 对应 [Delon](/theme/locale) 语言包 |
-| -------- | --------------------------- | --------------------------- | ----------------- | ----------------- |
-| 简体中文 | zh-Hans,zh-cn,zh-Hans-CN,zh | zh-Hans,zh-cn,zh-Hans-CN,zh | zh_CN             | zh_CN             |
-| 繁体中文 | zh-Hant,zh-tw,zh-Hant-TW    | zh-Hant,zh-tw,zh-Hant-TW    | zh_TW             | zh_TW             |
-| 英语（美式）    | en        | en           | en_US             | en_US        |
-| 土耳其语       | tr     | tr        | tr_TR            | tr_TR       |
-| 波兰语    | pl     | pl        | pl_PL            | pl_PL       |
-| 希腊语    | el     | el        | el_GR            | el_GR       |
-| 朝鲜语    | ko     | ko        | ko_KR            | ko_KR       |
-| 克罗地亚       | hr     | hr        | hr_HR            | hr_HR       |
+| 名称 | 语言包名称 | 对应 [Angular](https://github.com/angular/angular/tree/master/packages/common/locales) 语言包 | 对应 [Zorro](http://ng.ant.design/docs/i18n/zh#%E6%94%AF%E6%8C%81%E8%AF%AD%E8%A8%80) 语言包 | 对应 [Delon](/theme/locale) 语言包 |
+|----|-------|------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------|-------------------------------|
+| 简体中文 | zh-Hans,zh-cn,zh-Hans-CN,zh | zh-Hans,zh-cn,zh-Hans-CN,zh | zh_CN | zh_CN |
+| 繁体中文 | zh-Hant,zh-tw,zh-Hant-TW | zh-Hant,zh-tw,zh-Hant-TW | zh_TW | zh_TW |
+| 英语（美式） | en | en | en_US | en_US |
+| 土耳其语 | tr | tr | tr_TR | tr_TR |
+| 波兰语 | pl | pl | pl_PL | pl_PL |
+| 希腊语 | el | el | el_GR | el_GR |
+| 朝鲜语 | ko | ko | ko_KR | ko_KR |
+| 克罗地亚 | hr | hr | hr_HR | hr_HR |
+| 斯洛文尼亚文 | sl | sl | sl_SI | sl_SI |
 
 ### networkEnv
 

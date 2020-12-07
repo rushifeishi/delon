@@ -18,11 +18,13 @@ import {
 } from '@angular/core';
 import { FormControlName, NgModel, RequiredValidator, Validator } from '@angular/forms';
 import { ResponsiveService } from '@delon/theme';
-import { InputBoolean, InputNumber, isEmpty } from '@delon/util';
+import { BooleanInput, InputBoolean, InputNumber, isEmpty, NumberInput } from '@delon/util';
 import { helpMotion } from 'ng-zorro-antd/core/animation';
 import { NzSafeAny } from 'ng-zorro-antd/core/types';
-import { Subscription } from 'rxjs';
+import { Subject } from 'rxjs';
+import { filter, takeUntil } from 'rxjs/operators';
 import { SEContainerComponent } from './se-container.component';
+import { SEError, SEErrorType } from './se.types';
 
 const prefixCls = `se`;
 let nextUniqueId = 0;
@@ -34,8 +36,8 @@ let nextUniqueId = 0;
   host: {
     '[style.padding-left.px]': 'paddingValue',
     '[style.padding-right.px]': 'paddingValue',
-    '[class.ant-form-item-has-error]': 'showErr',
-    '[class.ant-form-item-with-help]': 'showErr && !compact',
+    '[class.ant-form-item-has-error]': 'invalid',
+    '[class.ant-form-item-with-help]': 'showErr',
   },
   preserveWhitespaces: false,
   animations: [helpMotion],
@@ -43,8 +45,13 @@ let nextUniqueId = 0;
   encapsulation: ViewEncapsulation.None,
 })
 export class SEComponent implements OnChanges, AfterContentInit, AfterViewInit, OnDestroy {
+  static ngAcceptInputType_col: NumberInput;
+  static ngAcceptInputType_required: BooleanInput;
+  static ngAcceptInputType_line: BooleanInput;
+  static ngAcceptInputType_labelWidth: NumberInput;
+
   private el: HTMLElement;
-  private status$: Subscription;
+  private unsubscribe$ = new Subject<void>();
   @ContentChild(NgModel, { static: true }) private readonly ngModel: NgModel;
   @ContentChild(FormControlName, { static: true })
   private readonly formControlName: FormControlName;
@@ -52,7 +59,8 @@ export class SEComponent implements OnChanges, AfterContentInit, AfterViewInit, 
   private clsMap: string[] = [];
   private inited = false;
   private onceFlag = false;
-  private errorData: { [key: string]: string | TemplateRef<void> } = {};
+  private errorData: SEError = {};
+  private isBindModel = false;
   invalid = false;
   _labelWidth: number | null = null;
   _error: string | TemplateRef<void>;
@@ -61,8 +69,9 @@ export class SEComponent implements OnChanges, AfterContentInit, AfterViewInit, 
 
   @Input() optional: string | TemplateRef<void>;
   @Input() optionalHelp: string | TemplateRef<void>;
+  @Input() optionalHelpColor: string;
   @Input()
-  set error(val: string | TemplateRef<void> | { [key: string]: string | TemplateRef<void> }) {
+  set error(val: SEErrorType) {
     this.errorData = typeof val === 'string' || val instanceof TemplateRef ? { '': val } : val;
   }
   @Input() extra: string | TemplateRef<void>;
@@ -79,7 +88,7 @@ export class SEComponent implements OnChanges, AfterContentInit, AfterViewInit, 
     this._autoId = false;
   }
 
-  _id = `_se-${nextUniqueId++}`;
+  _id = `_se-${++nextUniqueId}`;
   _autoId = true;
 
   // #endregion
@@ -89,7 +98,7 @@ export class SEComponent implements OnChanges, AfterContentInit, AfterViewInit, 
   }
 
   get showErr(): boolean {
-    return this.invalid && !!this._error;
+    return this.invalid && !!this._error && !this.compact;
   }
 
   get compact(): boolean {
@@ -111,6 +120,15 @@ export class SEComponent implements OnChanges, AfterContentInit, AfterViewInit, 
       throw new Error(`[se] must include 'se-container' component`);
     }
     this.el = el.nativeElement;
+    parent.errorNotify
+      .pipe(
+        takeUntil(this.unsubscribe$),
+        filter(w => this.inited && this.ngControl != null && this.ngControl.name === w.name),
+      )
+      .subscribe(item => {
+        this.error = item.error;
+        this.updateStatus(this.ngControl.invalid!);
+      });
   }
 
   private setClass(): this {
@@ -128,14 +146,20 @@ export class SEComponent implements OnChanges, AfterContentInit, AfterViewInit, 
     return this;
   }
 
-  private bindModel() {
-    if (!this.ngControl || this.status$) return;
+  private bindModel(): void {
+    if (!this.ngControl || this.isBindModel) return;
 
-    this.status$ = this.ngControl.statusChanges!.subscribe(res => this.updateStatus(res === 'INVALID'));
+    this.isBindModel = true;
+    this.ngControl.statusChanges!.pipe(takeUntil(this.unsubscribe$)).subscribe(res => this.updateStatus(res === 'INVALID'));
     if (this._autoId) {
-      const control = (this.ngControl.valueAccessor as NzSafeAny)?._elementRef?.nativeElement as HTMLElement;
-      if (control) {
-        control.id = this._id;
+      const controlAccessor = this.ngControl.valueAccessor as NzSafeAny;
+      const control = (controlAccessor?.elementRef || controlAccessor?._elementRef)?.nativeElement as HTMLElement;
+      if (!!control) {
+        if (control.id) {
+          this._id = control.id;
+        } else {
+          control.id = this._id;
+        }
       }
     }
     // auto required
@@ -150,7 +174,7 @@ export class SEComponent implements OnChanges, AfterContentInit, AfterViewInit, 
     if (this.ngControl.disabled || this.ngControl.isDisabled) {
       return;
     }
-    this.invalid = ((invalid && this.onceFlag) || (this.ngControl.dirty && invalid)) as boolean;
+    this.invalid = !this.onceFlag && invalid && this.parent.ingoreDirty === false && !this.ngControl.dirty ? false : invalid;
     const errors = this.ngControl.errors;
     if (errors != null && Object.keys(errors).length > 0) {
       const key = Object.keys(errors)[0] || '';
@@ -175,9 +199,11 @@ export class SEComponent implements OnChanges, AfterContentInit, AfterViewInit, 
     this.checkContent();
   }
 
-  ngOnChanges() {
+  ngOnChanges(): void {
     this.onceFlag = this.parent.firstVisual;
-    if (this.inited) this.setClass().bindModel();
+    if (this.inited) {
+      this.setClass().bindModel();
+    }
   }
 
   ngAfterViewInit(): void {
@@ -192,8 +218,8 @@ export class SEComponent implements OnChanges, AfterContentInit, AfterViewInit, 
   }
 
   ngOnDestroy(): void {
-    if (this.status$) {
-      this.status$.unsubscribe();
-    }
+    const { unsubscribe$ } = this;
+    unsubscribe$.next();
+    unsubscribe$.complete();
   }
 }

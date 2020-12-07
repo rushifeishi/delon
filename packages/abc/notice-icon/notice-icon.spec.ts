@@ -1,6 +1,6 @@
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement, ViewChild } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, discardPeriodicTasks, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { createTestContext } from '@delon/testing';
@@ -8,6 +8,8 @@ import { DelonLocaleModule, DelonLocaleService, en_US, zh_CN } from '@delon/them
 import { NoticeIconComponent } from './notice-icon.component';
 import { NoticeIconModule } from './notice-icon.module';
 import { NoticeItem } from './notice-icon.types';
+
+const CLICKTIME = 151;
 
 describe('abc: notice-icon', () => {
   let fixture: ComponentFixture<TestComponent>;
@@ -39,6 +41,7 @@ describe('abc: notice-icon', () => {
       fixture.detectChanges();
       const cur = dl.query(By.css('.ant-scroll-number-only .current')).nativeElement as HTMLElement;
       expect(+cur.textContent!.trim()).toBe(context.count);
+      discardPeriodicTasks();
     }));
   });
 
@@ -57,45 +60,45 @@ describe('abc: notice-icon', () => {
         expect(context.popoverVisible).toBeUndefined();
         (dl.query(By.css('.ant-badge')).nativeElement as HTMLElement).click();
         fixture.detectChanges();
-        fixture.whenStable().then(() => {
+        setTimeout(() => {
           expect(context.popoverVisible).toBe(true);
           done();
-        });
+        }, CLICKTIME);
       });
     });
     it('should be control loading in visible popover', done => {
       context.loading = true;
       context.popoverVisible = true;
       fixture.detectChanges();
-      fixture.whenStable().then(() => {
+      setTimeout(() => {
         const el = document.querySelector('.ant-spin-container') as HTMLElement;
         expect(el.style.display).toBe('');
         done();
-      });
+      }, CLICKTIME);
     });
     it('should be select item', done => {
       spyOn(context, 'select');
       context.popoverVisible = true;
       fixture.detectChanges();
-      fixture.whenStable().then(() => {
+      setTimeout(() => {
         expect(context.select).not.toHaveBeenCalled();
         (document.querySelector('nz-list-item')! as HTMLElement).click();
         fixture.detectChanges();
         expect(context.select).toHaveBeenCalled();
         done();
-      });
+      }, CLICKTIME);
     });
     it('should be clear', done => {
       spyOn(context, 'clear');
       context.popoverVisible = true;
       fixture.detectChanges();
-      fixture.whenStable().then(() => {
+      setTimeout(() => {
         expect(context.clear).not.toHaveBeenCalled();
         (document.querySelector('.notice-icon__clear')! as HTMLElement).click();
         fixture.detectChanges();
         expect(context.clear).toHaveBeenCalled();
         done();
-      });
+      }, CLICKTIME);
     });
   });
 
@@ -103,7 +106,7 @@ describe('abc: notice-icon', () => {
     context.popoverVisible = true;
     context.data = [{ title: 'a1', list: [] }];
     fixture.detectChanges();
-    fixture.whenStable().then(() => {
+    setTimeout(() => {
       const a = document.querySelector('.notice-icon__notfound')! as HTMLElement;
       expect(a.innerText).toBe(zh_CN.noticeIcon.emptyText);
       const srv = TestBed.inject<DelonLocaleService>(DelonLocaleService) as DelonLocaleService;
@@ -111,7 +114,7 @@ describe('abc: notice-icon', () => {
       fixture.detectChanges();
       expect(a.innerText).toBe(en_US.noticeIcon.emptyText);
       done();
-    });
+    }, CLICKTIME);
   });
 });
 
@@ -178,7 +181,7 @@ class TestComponent {
   count = 10;
   loading = false;
   popoverVisible: boolean;
-  select() {}
-  clear() {}
-  popupVisibleChange() {}
+  select(): void {}
+  clear(): void {}
+  popupVisibleChange(): void {}
 }

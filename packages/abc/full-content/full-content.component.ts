@@ -15,7 +15,7 @@ import {
   ViewEncapsulation,
 } from '@angular/core';
 import { ActivationEnd, ActivationStart, Event, Router } from '@angular/router';
-import { InputBoolean, InputNumber } from '@delon/util';
+import { BooleanInput, InputBoolean, InputNumber, NumberInput } from '@delon/util';
 import { fromEvent, Subscription } from 'rxjs';
 import { debounceTime, filter } from 'rxjs/operators';
 import { FullContentService } from './full-content.service';
@@ -37,6 +37,10 @@ const hideTitleCls = `full-content__hidden-title`;
   encapsulation: ViewEncapsulation.None,
 })
 export class FullContentComponent implements AfterViewInit, OnInit, OnChanges, OnDestroy {
+  static ngAcceptInputType_fullscreen: BooleanInput;
+  static ngAcceptInputType_hideTitle: BooleanInput;
+  static ngAcceptInputType_padding: NumberInput;
+
   private bodyEl: HTMLElement;
   private inited = false;
   private srv$: Subscription;
@@ -63,7 +67,7 @@ export class FullContentComponent implements AfterViewInit, OnInit, OnChanges, O
     @Inject(DOCUMENT) private doc: any,
   ) {}
 
-  private updateCls() {
+  private updateCls(): void {
     const clss = this.bodyEl.classList;
     if (this.fullscreen) {
       clss.add(openedCls);
@@ -78,19 +82,19 @@ export class FullContentComponent implements AfterViewInit, OnInit, OnChanges, O
     }
   }
 
-  private update() {
+  private update(): void {
     this.updateCls();
     this.updateHeight();
     this.fullscreenChange.emit(this.fullscreen);
   }
 
-  private updateHeight() {
+  private updateHeight(): void {
     this._height =
       this.bodyEl.getBoundingClientRect().height - (this.el.nativeElement as HTMLElement).getBoundingClientRect().top - this.padding;
     this.cdr.detectChanges();
   }
 
-  private removeInBody() {
+  private removeInBody(): void {
     this.bodyEl.classList.remove(wrapCls, openedCls, hideTitleCls);
   }
 
@@ -126,13 +130,13 @@ export class FullContentComponent implements AfterViewInit, OnInit, OnChanges, O
       });
   }
 
-  toggle() {
+  toggle(): void {
     this.fullscreen = !this.fullscreen;
     this.update();
     this.updateHeight();
   }
 
-  ngAfterViewInit() {
+  ngAfterViewInit(): void {
     setTimeout(() => this.updateHeight());
   }
 

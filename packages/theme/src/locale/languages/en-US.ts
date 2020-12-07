@@ -16,7 +16,7 @@ export default {
     close: 'Close tab',
     closeOther: 'Close other tabs',
     closeRight: 'Close tabs to right',
-    clear: 'Clear tabs',
+    refresh: 'Refresh',
   },
   tagSelect: {
     expand: 'Expand',
@@ -74,5 +74,11 @@ export default {
       formatExclusiveMinimum: `formatExclusiveMinimum should be boolean`,
       if: `Should match "{failingKeyword}" schema`,
     },
+  },
+  onboarding: {
+    skip: `Skip`,
+    prev: `Prev`,
+    next: `Next`,
+    done: `Done`,
   },
 } as FullLocaleData;
