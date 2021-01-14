@@ -16,6 +16,7 @@ const alainConfig: AlainConfig = {
     licenseA: `C94CEE276DB2187AE6B65D56B3FC2848`,
   },
   mock: { data: MOCKDATA },
+  pdf: {},
 };
 
 const alainModules = [AlainThemeModule.forRoot(), DelonACLModule.forRoot(), DelonMockModule.forRoot()];
@@ -31,6 +32,18 @@ import { NzConfig, NZ_CONFIG } from 'ng-zorro-antd/core/config';
 const ngZorroConfig: NzConfig = {};
 
 const zorroProvides = [{ provide: NZ_CONFIG, useValue: ngZorroConfig }];
+
+// #endregion
+
+// #region reuse-tab
+
+// import { RouteReuseStrategy } from '@angular/router';
+// import { ReuseTabService, ReuseTabStrategy } from '@delon/abc/reuse-tab';
+// alainProvides.push({
+//   provide: RouteReuseStrategy,
+//   useClass: ReuseTabStrategy,
+//   deps: [ReuseTabService],
+// } as any);
 
 // #endregion
 

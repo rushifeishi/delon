@@ -1,3 +1,4 @@
+import { Direction, Directionality } from '@angular/cdk/bidi';
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -6,30 +7,39 @@ import {
   ContentChildren,
   Input,
   OnChanges,
+  OnDestroy,
+  Optional,
   QueryList,
   ViewEncapsulation,
 } from '@angular/core';
 import { InputNumber, NumberInput } from '@delon/util';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { AvatarListItemComponent } from './avatar-list-item.component';
 
 @Component({
   selector: 'avatar-list',
   exportAs: 'avatarList',
   templateUrl: './avatar-list.component.html',
-  host: { '[class.avatar-list]': 'true' },
+  host: {
+    '[class.avatar-list]': 'true',
+    '[class.avatar-list-rtl]': `dir === 'rtl'`,
+  },
   preserveWhitespaces: false,
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
 })
-export class AvatarListComponent implements AfterViewInit, OnChanges {
+export class AvatarListComponent implements AfterViewInit, OnChanges, OnDestroy {
   static ngAcceptInputType_maxLength: NumberInput;
 
   private inited = false;
   @ContentChildren(AvatarListItemComponent, { descendants: false })
   private _items!: QueryList<AvatarListItemComponent>;
+  private destroy$ = new Subject<void>();
 
   items: AvatarListItemComponent[] = [];
   exceedCount = 0;
+  dir: Direction = 'ltr';
 
   cls = '';
   avatarSize = '';
@@ -50,7 +60,7 @@ export class AvatarListComponent implements AfterViewInit, OnChanges {
   @Input() @InputNumber() maxLength = 0;
   @Input() excessItemsStyle: {};
 
-  constructor(private cdr: ChangeDetectorRef) {}
+  constructor(private cdr: ChangeDetectorRef, @Optional() private directionality: Directionality) {}
 
   private gen(): void {
     const { _items } = this;
@@ -63,6 +73,10 @@ export class AvatarListComponent implements AfterViewInit, OnChanges {
   }
 
   ngAfterViewInit(): void {
+    this.dir = this.directionality.value;
+    this.directionality.change?.pipe(takeUntil(this.destroy$)).subscribe((direction: Direction) => {
+      this.dir = direction;
+    });
     this.gen();
     this.inited = true;
   }
@@ -71,5 +85,10 @@ export class AvatarListComponent implements AfterViewInit, OnChanges {
     if (this.inited) {
       this.gen();
     }
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

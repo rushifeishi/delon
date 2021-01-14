@@ -8,6 +8,7 @@ PWD=`pwd`
 readonly thisDir=$(cd $(dirname $0); pwd)
 
 cd $(dirname $0)/../..
+source ./scripts/ci/utils.sh
 
 BUILD=false
 TEST=false
@@ -38,40 +39,10 @@ for ARG in "$@"; do
   esac
 done
 
-VERSION=$(node -p "require('./package.json').version")
 if [[ ${INTEGRATION} == true ]]; then
   VERSION='latest'
 fi
 
-DEPENDENCIES=$(node -p "
-  const vs = require('./package.json').dependencies;
-  const dvs = require('./package.json').devDependencies;
-  [
-    'screenfull',
-    'ajv',
-    '@ngx-translate/core',
-    '@ngx-translate/http-loader',
-    'tslint-config-prettier',
-    'tslint-language-service',
-    'pretty-quick',
-    'husky',
-    'stylelint-config-prettier',
-    'stylelint-config-rational-order',
-    'stylelint-config-standard',
-    'stylelint-declaration-block-no-ignored-properties',
-    'stylelint-order',
-    'stylelint',
-    'prettier',
-    '@antv/data-set',
-    '@antv/g2',
-    'ngx-countdown',
-    'ng-alain-codelyzer',
-    'ng-alain-sts',
-    'ng-alain-plugin-theme',
-    'nz-tslint-rules'
-  ].map(key => key.replace(/\//g, '\\\\/').replace(/-/g, '\\\\-') + '|' + (vs[key] || dvs[key])).join('\n\t');
-")
-ZORROVERSION=$(node -p "require('./package.json').dependencies['ng-zorro-antd']")
 echo "=====BUILDING: Version ${VERSION}, Zorro Version ${ZORROVERSION}"
 
 TSC=${PWD}/node_modules/.bin/tsc
@@ -80,31 +51,6 @@ JASMINE=${PWD}/node_modules/.bin/jasmine
 SOURCE=${PWD}/packages/schematics
 DIST=${PWD}/dist/ng-alain/
 tsconfigFile=${SOURCE}/tsconfig.json
-
-updateVersionReferences() {
-  NPM_DIR="$1"
-  (
-    cd ${NPM_DIR}
-
-    echo ">>> VERSION: Updating dependencies version references in ${NPM_DIR}"
-    local lib version
-    for dependencie in ${DEPENDENCIES[@]}
-    do
-      IFS=$'|' read -r lib version <<< "$dependencie"
-      # echo ">>>> update ${lib}: ${version}"
-      perl -p -i -e "s/${lib}\@DEP\-0\.0\.0\-PLACEHOLDER/${lib}\@${version}/g" $(grep -ril ${lib}\@DEP\-0\.0\.0\-PLACEHOLDER .) < /dev/null 2> /dev/null
-    done
-
-    FIX_VERSION="${VERSION}"
-    if [[ ${FIX_VERSION} != "latest" ]]; then
-      FIX_VERSION="^${FIX_VERSION}"
-    fi
-    echo ">>> VERSION: Updating version references in ${NPM_DIR}"
-    perl -p -i -e "s/ZORRO\-0\.0\.0\-PLACEHOLDER/${ZORROVERSION}/g" $(grep -ril ZORRO\-0\.0\.0\-PLACEHOLDER .) < /dev/null 2> /dev/null
-    perl -p -i -e "s/PEER\-0\.0\.0\-PLACEHOLDER/${FIX_VERSION}/g" $(grep -ril PEER\-0\.0\.0\-PLACEHOLDER .) < /dev/null 2> /dev/null
-    perl -p -i -e "s/0\.0\.0\-PLACEHOLDER/${VERSION}/g" $(grep -ril 0\.0\.0\-PLACEHOLDER .) < /dev/null 2> /dev/null
-  )
-}
 
 copyFiles() {
   mkdir -p ${2}
@@ -129,16 +75,21 @@ copyFiles() {
     # mock
     "${1}_mock/_user.ts|${2}application/files/root/_mock/"
     # src
+    "${1}src/favicon.ico|${2}application/files/src/"
     "${1}src/typings.d.ts|${2}application/files/src/"
     "${1}src/environments|${2}application/files/src/"
     "${1}src/styles|${2}application/files/src/"
     "${1}src/main.ts|${2}application/files/src/"
+    "${1}src/test.ts|${2}application/files/src/"
     "${1}src/styles.less|${2}application/files/src/"
     "${1}src/style-icons-auto.ts|${2}application/files/src/"
     "${1}src/style-icons.ts|${2}application/files/src/"
     # assets
+    "${1}src/assets/color.less|${2}application/files/src/assets/"
+    "${1}src/assets/style.compact.css|${2}application/files/src/assets/"
+    "${1}src/assets/style.dark.css|${2}application/files/src/assets/"
     "${1}src/assets/*.svg|${2}application/files/src/assets/"
-    "${1}src/assets/tmp/img/*|${2}application/files/src/assets/tmp/img/"
+    "${1}src/assets/tmp/img/avatar.jpg|${2}application/files/src/assets/tmp/img/"
     "${1}src/assets/tmp/i18n/*|${2}application/files/src/assets/tmp/i18n/"
     "${1}src/assets/tmp/app-data.json|${2}application/files/src/assets/tmp/"
     # core
@@ -154,21 +105,20 @@ copyFiles() {
     "${1}src/app/global-config.module.ts|${2}application/files/src/app/"
     "${1}src/app/app.component.ts|${2}application/files/src/app/"
     # layout
-    "${1}src/app/layout/fullscreen|${2}application/files/src/app/layout/"
+    "${1}src/app/layout/blank|${2}application/files/src/app/layout/"
     "${1}src/app/layout/passport/passport.component.less|${2}application/files/src/app/layout/passport/"
     "${1}src/app/layout/passport/passport.component.ts|${2}application/files/src/app/layout/passport/"
-    "${1}src/app/layout/default/setting-drawer|${2}application/files/src/app/layout/default/"
-    "${1}src/app/layout/default/theme-btn|${2}application/files/src/app/layout/default/"
-    # "${1}src/app/layout/default/default.component.html|${2}application/files/src/app/layout/default/"
-    "${1}src/app/layout/default/default.component.ts|${2}application/files/src/app/layout/default/"
-    "${1}src/app/layout/default/header/index.md|${2}application/files/src/app/layout/default/header/"
-    "${1}src/app/layout/default/header/components|${2}application/files/src/app/layout/default/header/"
-    "${1}src/app/layout/default/header/header.component.ts|${2}application/files/src/app/layout/default/header/"
-    "${1}src/app/layout/default/sidebar|${2}application/files/src/app/layout/default/"
+    "${1}src/app/layout/basic/README.md|${2}application/files/src/app/layout/basic/"
+    "${1}src/app/layout/basic/widgets/i18n.component.ts|${2}application/files/src/app/layout/basic/widgets/"
+    "${1}src/app/layout/basic/widgets/search.component.ts|${2}application/files/src/app/layout/basic/widgets/"
+    "${1}src/app/layout/basic/widgets/user.component.ts|${2}application/files/src/app/layout/basic/widgets/"
+    "${1}src/app/layout/basic/widgets/clear-storage.component.ts|${2}application/files/src/app/layout/basic/widgets/"
+    "${1}src/app/layout/basic/widgets/fullscreen.component.ts|${2}application/files/src/app/layout/basic/widgets/"
     # router
-    "${1}src/app/routes/callback|${2}application/files/src/app/routes/"
     "${1}src/app/routes/exception|${2}application/files/src/app/routes/"
     "${1}src/app/routes/passport|${2}application/files/src/app/routes/"
+    # plugin
+    "${1}src/app/layout/basic/widgets/rtl.component.ts|${2}plugin/files/rtl/layout/basic/widgets/"
   )
   local from to
   for fields in ${paths[@]}
@@ -193,7 +143,7 @@ copyFiles() {
 cloneScaffold() {
   if [[ ! -d ng-alain ]]; then
     echo ">>> Not found scaffold source files, must be clone ng-alain ..."
-    git clone --depth 1 -b issues-ng11 https://github.com/ng-alain/ng-alain.git
+    git clone --depth 1 https://github.com/ng-alain/ng-alain.git
     echo ">>> removed .git"
     rm -rf ng-alain/.git
   else

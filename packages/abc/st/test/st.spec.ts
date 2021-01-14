@@ -1491,6 +1491,15 @@ describe('abc: table', () => {
           expect(comp.resetColumns).toHaveBeenCalled();
           page.asyncEnd();
         }));
+        it('should be support data of index', fakeAsync(() => {
+          page.cd();
+          page.expectData(1, 'name', `name 1`);
+          spyOn(comp, 'resetColumns');
+          comp.setRow(comp.list[0], { name: 'new name' });
+          expect(comp.resetColumns).not.toHaveBeenCalled();
+          page.expectData(1, 'name', `new name`);
+          page.asyncEnd();
+        }));
       });
       describe('#clean', () => {
         beforeEach(fakeAsync(() => {
@@ -1584,6 +1593,26 @@ describe('abc: table', () => {
         expect(comp.list.length).toBe(PS);
         page.asyncEnd();
       }));
+      describe('#pureItem', () => {
+        it('should be deleted _values', fakeAsync(() => {
+          page.cd();
+          expect(comp.list[0]._values).not.toBeUndefined();
+          expect(comp.pureItem(comp.list[0])!._values).toBeUndefined();
+          page.asyncEnd();
+        }));
+        it('should be deleted _values via index', fakeAsync(() => {
+          page.cd();
+          expect(comp.list[0]._values).not.toBeUndefined();
+          expect(comp.pureItem(0)!._values).toBeUndefined();
+          page.asyncEnd();
+        }));
+        it('should be return null when not found row via index', fakeAsync(() => {
+          page.cd();
+          expect(comp.list[0]._values).not.toBeUndefined();
+          expect(comp.pureItem(PS + 10)).toBe(null);
+          page.asyncEnd();
+        }));
+      });
     });
     describe('#export', () => {
       let exportSrv: STExport;

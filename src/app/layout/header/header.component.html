@@ -6,9 +6,6 @@
     <li nz-menu-item routerLink="/components/sv/{{ i18n.zone }}" [matchRouter]="regexs.components">
       {{ 'app.header.menu.components' | translate }}
     </li>
-    <li nz-menu-item routerLink="/cli/getting-started/{{ i18n.zone }}" [matchRouter]="regexs.cli">
-      {{ 'app.header.menu.cli' | translate }}
-    </li>
     <li *ngIf="isMobile" nz-menu-group [nzTitle]="'app.header.menu.delon' | translate">
       <ul>
         <li *ngFor="let i of delon" nz-menu-item routerLink="/{{ i }}/getting-started/{{ i18n.zone }}">
@@ -68,7 +65,7 @@
     </h1>
   </div>
   <div nz-col nz-col nzXs="0" nzSm="0" nzMd="0" nzLg="0" nzXl="19" nzXXl="20" class="menu-row">
-    <header-search></header-search>
+    <header-search *ngIf="showSearch"></header-search>
     <ng-container *ngIf="!isMobile">
       <ng-template [ngTemplateOutlet]="menu"></ng-template>
       <nz-select nzSize="small" class="version" [ngModel]="currentVersion" (ngModelChange)="toVersion($event)">
@@ -77,6 +74,9 @@
       </nz-select>
       <button nz-button nzGhost nzSize="small" (click)="langChange(i18n.zone === 'zh' ? 'en' : 'zh')" class="header-button header-lang-button">
         {{ 'app.header.lang' | translate }}
+      </button>
+      <button nz-button nzGhost nzSize="small" class="header-button header-direction-button" (click)="rtl.toggle()">
+        {{ rtl.nextDir | uppercase }}
       </button>
       <github-button type="stargazers" size="small" namespace="ng-alain" repo="ng-alain"></github-button>
     </ng-container>

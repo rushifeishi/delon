@@ -4,6 +4,7 @@ import { APP_INITIALIZER, Inject, Injector, NgModule, PLATFORM_ID } from '@angul
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { TranslateModule } from '@ngx-translate/core';
+import { BidiModule } from '@angular/cdk/bidi';
 
 // angular i18n
 import { isPlatformBrowser, registerLocaleData } from '@angular/common';
@@ -29,6 +30,8 @@ import { UEditorModule } from 'ngx-ueditor';
 import { JsonSchemaModule } from './shared/json-schema/json-schema.module';
 import { STWidgetModule, STWIDGET_COMPONENTS } from './shared/st-widget/st-widget.module';
 
+import { ServiceWorkerModule } from '@angular/service-worker';
+import { environment } from '../environments/environment';
 import { ExampleModule, EXAMPLE_COMPONENTS } from './routes/gen/examples';
 import { IconComponent } from './shared/components/icon/icon.component';
 
@@ -60,6 +63,7 @@ function registerElements(injector: Injector, platformId: {}): void {
     BrowserModule.withServerTransition({ appId: 'serverApp' }),
     BrowserAnimationsModule,
     HttpClientModule,
+    BidiModule,
     GlobalConfigModule.forRoot(),
     LayoutModule,
     SharedModule,
@@ -82,6 +86,7 @@ function registerElements(injector: Injector, platformId: {}): void {
     SimplemdeModule.forRoot({
       delay: 300,
     }),
+    ServiceWorkerModule.register('ngsw-worker.js', { enabled: environment.production }),
   ],
   providers: [
     // {

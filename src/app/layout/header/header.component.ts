@@ -2,11 +2,12 @@ import { DOCUMENT } from '@angular/common';
 import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, Inject } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { I18NService, MobileService } from '@core';
-import { VERSION } from '@delon/theme';
+import { RTLService } from '@delon/theme';
 import { copy } from '@delon/util';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { filter } from 'rxjs/operators';
 import { MetaSearchGroupItem } from '../../interfaces';
+const pkg = require('../../../../package.json');
 
 @Component({
   selector: 'app-header',
@@ -20,9 +21,9 @@ import { MetaSearchGroupItem } from '../../interfaces';
 export class HeaderComponent implements AfterViewInit {
   private inited = false;
   isMobile: boolean;
-  oldVersionList = [`9.x`, `8.x`, `1.x`];
-  currentVersion = VERSION.full;
-  delon = ['theme', 'auth', 'acl', 'form', 'cache', 'chart', 'mock', 'util'];
+  oldVersionList = [`10.x`, `9.x`, `8.x`, `1.x`];
+  currentVersion = pkg.version;
+  delon = ['theme', 'auth', 'acl', 'form', 'cache', 'chart', 'mock', 'util', 'cli'];
   menuVisible = false;
   showGitee = false;
   regexs = {
@@ -31,6 +32,7 @@ export class HeaderComponent implements AfterViewInit {
     cli: { regex: /^\/cli/ },
     delon: { regex: /^\/(theme|auth|acl|form|cache|chart|mock|util)/ },
   };
+  showSearch = true;
 
   private getWin(): Window {
     return (this.doc as Document).defaultView || window;
@@ -43,6 +45,7 @@ export class HeaderComponent implements AfterViewInit {
     private mobileSrv: MobileService,
     @Inject(DOCUMENT) private doc: any,
     private cdr: ChangeDetectorRef,
+    public rtl: RTLService,
   ) {
     router.events.pipe(filter(evt => evt instanceof NavigationEnd)).subscribe(() => {
       this.menuVisible = false;
@@ -72,7 +75,16 @@ export class HeaderComponent implements AfterViewInit {
   }
 
   langChange(language: 'en' | 'zh'): void {
-    this.router.navigateByUrl(`${this.i18n.getRealUrl(this.router.url)}/${language}`).then(() => this.updateGitee());
+    this.router.navigateByUrl(`${this.i18n.getRealUrl(this.router.url)}/${language}`).then(() => {
+      this.updateGitee();
+      // fix header-search
+      this.showSearch = false;
+      this.cdr.detectChanges();
+      setTimeout(() => {
+        this.showSearch = true;
+        this.cdr.detectChanges();
+      }, 100);
+    });
   }
 
   onCopy(value: string): void {

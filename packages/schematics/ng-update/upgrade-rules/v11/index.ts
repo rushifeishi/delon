@@ -1,21 +1,11 @@
-import { normalize } from '@angular-devkit/core';
 import { Rule, SchematicContext, Tree } from '@angular-devkit/schematics';
 import { colors } from '@angular/cli/utilities/color';
-import { findNode } from '@schematics/angular/utility/ast-utils';
-import ts = require('typescript');
-import { getSourceFile } from '../../../utils/ast';
-import { readContent } from '../../../utils/file';
-import {
-  addPackageToPackageJson,
-  getAngular,
-  getPackage,
-  overwriteAngular,
-  overwritePackage,
-  removeAllowedCommonJsDependencies,
-} from '../../../utils/json';
+import { addPackageToPackageJson, getPackage } from '../../../utils/json';
 import { VERSION } from '../../../utils/lib-versions';
+import { logStart } from '../../../utils/log';
 import { getProjectFromWorkspace, getWorkspace, Project } from '../../../utils/project';
-import mainContent from './files-tpl/main';
+import { fixHmr } from './hmr';
+import { fixLayout } from './layout';
 
 let project: Project;
 
@@ -24,7 +14,7 @@ function fixVersion(tree: Tree, context: SchematicContext): void {
     tree,
     ['abc', 'acl', 'auth', 'cache', 'form', 'mock', 'theme', 'util', 'chart'].map(name => `@delon/${name}@${VERSION}`),
   );
-  context.logger.info(`    ${colors.green('✓')} Upgrade @delon/* version number`);
+  logStart(context, `Upgrade @delon/* version number`);
 }
 
 function fixThirdVersion(tree: Tree, context: SchematicContext): void {
@@ -32,80 +22,28 @@ function fixThirdVersion(tree: Tree, context: SchematicContext): void {
   addPackageToPackageJson(
     tree,
     [
-      // TODO: Wating ng-zorro-antd upgrade to 11
-      // `ng-zorro-antd@^10.0.0-beta.4`,
-      `ngx-ueditor@^11.0.0`,
-      `ngx-tinymce@^11.0.0`,
-      `ngx-ueditor@^11.0.0`,
+      `ng-zorro-antd@DEP-0.0.0-PLACEHOLDER`,
+      `ngx-ueditor@DEP-0.0.0-PLACEHOLDER`,
+      `ngx-tinymce@DEP-0.0.0-PLACEHOLDER`,
+      `ngx-countdown@DEP-0.0.0-PLACEHOLDER`,
+      'ajv@DEP-0.0.0-PLACEHOLDER',
     ],
     'dependencies',
   );
   // dependencies
-  addPackageToPackageJson(tree, [`webpack-bundle-analyzer@^4.1.0`], 'devDependencies');
-  context.logger.info(`    ${colors.green('✓')} Upgrade third libs version number`);
+  addPackageToPackageJson(tree, [`ng-alain-plugin-theme@DEP-0.0.0-PLACEHOLDER`, `ng-alain-sts@DEP-0.0.0-PLACEHOLDER`], 'devDependencies');
+  logStart(context, `Upgrade third libs version number`);
 }
 
-function removeHmrInEnt(tree: Tree, name: string): void {
-  const src = normalize(`${project.sourceRoot}/environments/${name}`);
-  if (!tree.exists(src)) return;
-
-  const source = getSourceFile(tree, src);
-  const hmrNode = findNode(source, ts.SyntaxKind.Identifier, 'hmr');
-  if (hmrNode == null || hmrNode.parent == null || hmrNode.parent.kind !== ts.SyntaxKind.PropertyAssignment) {
-    return;
-  }
-
-  const content = readContent(tree, src);
-  const prefix = content.substring(0, hmrNode.pos);
-  const suffix = content.substring(hmrNode.parent.end);
-  tree.overwrite(src, `${prefix}${suffix}`.replace(/,,/g, ','));
-}
-
-function fixHmr(tree: Tree, context: SchematicContext): void {
-  context.logger.info(`    ${colors.green('✓')} Using built-in hmr instead of '@angularclass/hmr'`);
-
-  // 检查是否存在 `hmr.ts` 文件作为是否已经安装 hmr 的前提条件
-  const hmrTsPath = normalize(`${project.sourceRoot}/hmr.ts`);
-  if (!tree.exists(hmrTsPath)) {
-    context.logger.info(`      ${colors.yellow('✓')} Ingored the part migration when not found '${hmrTsPath}'`);
-    return;
-  }
-  // 1、移除所有 `@angularclass/hmr` 的引用
-  const angularJson = getAngular(tree);
-  Object.keys(angularJson.projects).forEach(projectName => {
-    const projectItem = angularJson.projects[projectName];
-    ['build', 'serve'].forEach(typeKey => {
-      delete projectItem.architect[typeKey].configurations.hmr;
-    });
-  });
-  overwriteAngular(tree, angularJson);
-  context.logger.info(`      ${colors.green('✓')} Remove '@angularclass/hmr'`);
-
-  // 2、移除 angular.json 里面的 hmr 配置项，以及 environments 下相关的 hmr 配置
-  removeAllowedCommonJsDependencies(tree, '@angularclass/hmr');
-  // 移除 `environments.ts` 的 `hmr: false`
-  removeHmrInEnt(tree, 'environment.prod.ts');
-  removeHmrInEnt(tree, 'environment.ts');
-  // 删除 `environment.hmr.ts`
-  const environmentHmrTsPath = normalize(`${project.sourceRoot}/environments/environment.hmr.ts`);
-  if (tree.exists(environmentHmrTsPath)) {
-    tree.delete(environmentHmrTsPath);
-  }
-  context.logger.info(`    ${colors.green('✓')} Removed 'environments.hmr.ts' file`);
-
-  // 3、修改 package.json 命令行 `-c=hmr` 为 `--hmr`
+function fixAnalyze(tree: Tree, context: SchematicContext): void {
   const packageJson = getPackage(tree);
-  delete packageJson.devDependencies['@angularclass/hmr'];
-  if (packageJson.scripts.hmr) {
-    packageJson.scripts.hmr = (packageJson.scripts.hmr as string).replace(`-c=hmr`, `--hmr`);
+  delete packageJson.devDependencies['webpack-bundle-analyzer'];
+  packageJson.devDependencies['source-map-explorer'] = '^2.5.1';
+  if (packageJson.scripts.analyze) {
+    packageJson.scripts.analyze = (packageJson.scripts.analyze as string).replace(`--stats-json`, `--source-map`);
+    packageJson.scripts['analyze:view'] = `source-map-explorer dist/**/*.js`;
   }
-  overwritePackage(tree, packageJson);
-  context.logger.info(`      ${colors.green('✓')} '-c=hmr' instead of '--hmr' in package.json`);
-
-  // 4、修改 `main.ts` 并移除 `hmr.ts` 文件
-  tree.delete(hmrTsPath);
-  tree.overwrite(normalize(`${project.sourceRoot}/main.ts`), mainContent);
-  context.logger.info(`      ${colors.green('✓')} Modify 'main.ts' and remove 'hmr.ts' file`);
+  logStart(context, `Usd source-map-explorer instead of webpack-bundle-analyzer`);
 }
 
 export function v11Rule(): Rule {
@@ -114,7 +52,9 @@ export function v11Rule(): Rule {
 
     fixVersion(tree, context);
     fixThirdVersion(tree, context);
-    fixHmr(tree, context);
+    fixAnalyze(tree, context);
+    fixHmr(project.sourceRoot, tree, context);
+    fixLayout(project, tree, context);
 
     context.logger.info(
       colors.green(

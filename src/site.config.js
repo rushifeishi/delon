@@ -1,7 +1,7 @@
 module.exports = {
   defaultLang: 'zh-CN',
   langs: ['zh-CN', 'en-US'],
-  tocMaxDepth: 2, // toc max depth
+  tocMaxDepth: 3, // toc max depth
   template: {
     examples: './src/templates/examples.ts',
     examples_index: './src/templates/examples_index.ts',
@@ -562,11 +562,20 @@ module.exports = {
           hasSubDir: false,
         },
         {
-          src: ['./packages/theme/layout'],
+          src: ['./packages/theme/layout-default'],
           template: {
             content: './src/templates/content.ts',
           },
-          hasSubDir: true,
+          reName: 'layout-default',
+          hasSubDir: false,
+        },
+        {
+          src: ['./packages/theme/layout-blank'],
+          template: {
+            content: './src/templates/content.ts',
+          },
+          reName: 'layout-blank',
+          hasSubDir: false,
         },
         {
           src: ['./packages/theme/src/pipes'],

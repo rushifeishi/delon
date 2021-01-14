@@ -36,6 +36,7 @@ import {
   AlainConfigService,
   AlainSTConfig,
   BooleanInput,
+  deepCopy,
   deepMergeKey,
   InputBoolean,
   InputNumber,
@@ -214,9 +215,7 @@ export class STComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input() @InputNumber() rowClickTime = 200;
   @Input() @InputBoolean() responsive: boolean = true;
   @Input() @InputBoolean() responsiveHideHeaderFooter: boolean;
-  // tslint:disable-next-line:no-output-native
   @Output() readonly error = new EventEmitter<STError>();
-  // tslint:disable-next-line:no-output-native
   @Output() readonly change = new EventEmitter<STChange>();
   @Input() @InputBoolean() virtualScroll = false;
   @Input() @InputNumber() virtualItemSize = 54;
@@ -572,10 +571,14 @@ export class STComponent implements AfterViewInit, OnChanges, OnDestroy {
    * ```
    * this.st.setRow(0, { price: 100 })
    * this.st.setRow(0, { price: 100, name: 'asdf' })
+   * this.st.setRow(item, { price: 100 })
    * ```
    */
-  setRow(index: number, item: STData, options?: { refreshSchema?: boolean; emitReload?: boolean }): this {
+  setRow(index: number | STData, item: STData, options?: { refreshSchema?: boolean; emitReload?: boolean }): this {
     options = { refreshSchema: false, emitReload: false, ...options };
+    if (typeof index !== 'number') {
+      index = this._data.indexOf(index);
+    }
     this._data[index] = deepMergeKey(this._data[index], false, item);
     this.optimizeData();
     if (options.refreshSchema) {
@@ -852,6 +855,23 @@ export class STComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   private optimizeData(): void {
     this._data = this.dataSource.optimizeData({ columns: this._columns, result: this._data, rowClassName: this.rowClassName });
+  }
+
+  /**
+   * Return pure data, `st` internally maintains a set of data for caching, this part of data may affect the backend
+   *
+   * 返回纯净数据，`st` 内部会维护一组用于缓存的数据，这部分数据可能会影响后端
+   */
+  pureItem(itemOrIndex: STData | number): STData | null {
+    if (typeof itemOrIndex === 'number') {
+      itemOrIndex = this._data[itemOrIndex];
+    }
+    if (!itemOrIndex) {
+      return null;
+    }
+    const copyItem = deepCopy(itemOrIndex);
+    delete copyItem._values;
+    return copyItem;
   }
 
   ngAfterViewInit(): void {

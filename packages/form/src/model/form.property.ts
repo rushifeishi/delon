@@ -125,7 +125,7 @@ export abstract class FormProperty {
 
     if (options.emitValueEvent) {
       options.updatePath = options.updatePath || this.path;
-      options.updateValue = options.updateValue || this.value;
+      options.updateValue = options.updateValue == null ? this.value : options.updateValue;
       this.valueChanges.next({ value: this.value, path: options.updatePath, pathValue: options.updateValue });
     }
 
@@ -282,7 +282,11 @@ export abstract class FormProperty {
 
   // #region condition
 
-  private setVisible(visible: boolean): void {
+  /**
+   * Set the hide or display of widget
+   * 设置小部件的隐藏或显示
+   */
+  setVisible(visible: boolean): void {
     this._visible = visible;
     this._visibilityChanges.next(visible);
     // 部分数据源来自 reset

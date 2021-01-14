@@ -86,9 +86,7 @@ export class ReuseTabComponent implements OnInit, OnChanges, OnDestroy {
   @Input() tabBarStyle: { [key: string]: string };
   @Input() tabType: 'line' | 'card' = 'line';
   @Input() routeParamMatchMode: ReuseTabRouteParamMatchMode = 'strict';
-  // tslint:disable-next-line:no-output-native
   @Output() readonly change = new EventEmitter<ReuseItem>();
-  // tslint:disable-next-line:no-output-native
   @Output() readonly close = new EventEmitter<ReuseItem | null>();
 
   // #endregion
@@ -126,33 +124,32 @@ export class ReuseTabComponent implements OnInit, OnChanges, OnDestroy {
     };
   }
 
-    /* =============== [新增获取fullUrl的方法] =================== */
-    private getFullUrl(item: ReuseTabCached){
-
-        let fullUrl: string = item.url;
-        const queryParams = item._snapshot.queryParams;
-        if (queryParams && Object.keys(queryParams).length) {
-            const queryString : Array<string>= [];
-            for (const queryParam in queryParams) {
-                queryString.push(encodeURIComponent(queryParam) + '=' + encodeURIComponent(queryParams[queryParam]));
-            }
-            fullUrl += '?' + queryString.join('&');
-        }
-
-        if (item._snapshot.fragment) {
-            fullUrl += '#' + item._snapshot.fragment;
-        }
-        return fullUrl;
+  /* =============== [新增获取fullUrl的方法] =================== */
+  private getFullUrl(item: ReuseTabCached) {
+    let fullUrl: string = item.url;
+    const queryParams = item._snapshot.queryParams;
+    if (queryParams && Object.keys(queryParams).length) {
+      const queryString: Array<string> = [];
+      for (const queryParam in queryParams) {
+        queryString.push(encodeURIComponent(queryParam) + '=' + encodeURIComponent(queryParams[queryParam]));
+      }
+      fullUrl += '?' + queryString.join('&');
     }
-    /* =============== [新增方法END] =================== */
 
-    private genList(notify: ReuseTabNotify | null): void {
+    if (item._snapshot.fragment) {
+      fullUrl += '#' + item._snapshot.fragment;
+    }
+    return fullUrl;
+  }
+  /* =============== [新增方法END] =================== */
+
+  private genList(notify: ReuseTabNotify | null): void {
     const ls = this.srv.items.map(
       (item: ReuseTabCached, index: number) =>
         ({
           url: item.url,
           /* =============== [修改] =================== */
-          fullUrl : this.getFullUrl(item),
+          fullUrl: this.getFullUrl(item),
           /* =============== [修改END] =================== */
           title: this.genTit(item.title),
           closable: this.allowClose && item.closable && this.srv.count > 0,
@@ -239,7 +236,7 @@ export class ReuseTabComponent implements OnInit, OnChanges, OnDestroy {
   _to(index: number, cb?: () => void): void {
     index = Math.max(0, Math.min(index, this.list.length - 1));
     const item = this.list[index];
-     // [修改]: 修改第一个传参
+    // [修改]: 修改第一个传参
     this.router.navigateByUrl(item.fullUrl).then(res => {
       if (!res) return;
       this.item = item;

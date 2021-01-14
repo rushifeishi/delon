@@ -6,9 +6,10 @@
 
   #header {
     width: 100%;
-    max-width: 1200px;
+    max-width: 1280px;
     margin: 20px auto 0;
     padding: 0 24px;
+    background: 0 0;
     box-shadow: none;
   }
 
@@ -91,6 +92,7 @@
       height: 420px;
       overflow: hidden;
       img {
+        width: 100%;
         height: 100%;
         border-radius: 8px;
       }
@@ -196,6 +198,31 @@
         .anticon {
           margin: 0 0 16px 0;
         }
+      }
+    }
+  }
+}
+
+[dir='rtl'] {
+  .index-page {
+    .page-banner__slogan .ant-btn {
+      margin-right: 0;
+      margin-left: 16px;
+    }
+    .page-banner__img {
+      right: initial;
+      left: 0;
+    }
+    .page-feature__bg {
+      transform: skewY(4.5deg);
+    }
+    .page-feature .anticon {
+      margin-right: 0;
+      margin-left: 16px;
+    }
+    @media (max-width: @screen-md-max) {
+      #logo {
+        float: left;
       }
     }
   }

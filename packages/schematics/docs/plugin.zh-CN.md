@@ -96,6 +96,7 @@ ng g ng-alain:plugin defaultLanguage --defaultLanguage=zh-tw
 | 朝鲜语 | ko | ko | ko_KR | ko_KR |
 | 克罗地亚 | hr | hr | hr_HR | hr_HR |
 | 斯洛文尼亚文 | sl | sl | sl_SI | sl_SI |
+| 法文 | fr | fr | fr_FR | fr_FR |
 
 ### networkEnv
 
@@ -160,7 +161,18 @@ export class StartupService {
 <i nz-icon nzType="align-{{type ? 'left' : 'right'}}"></i>
 <i nz-icon [type]="type ? 'menu-fold' : 'menu-unfold'" [theme]="theme ? 'outline' : 'fill'"></i>
 <i nz-icon [type]="type ? 'fullscreen' : 'fullscreen-exit'"></i>
+<i nz-icon [nzType]="d.status === 'NORMAL' ? 'close1' : 'close2'"></i>
 <i nz-icon nzType="{{ type ? 'arrow-left' : 'arrow-right' }}"></i>
 <i nz-icon nzType="filter" theme="outline"></i>
 <nz-input-group [nzAddOnBeforeIcon]="focus ? 'anticon anticon-arrow-down' : 'anticon anticon-search'"></nz-input-group>
 ```
+
+### rtl
+
+支持 RTL 插件，即文本方向设置为“从右向左”。
+
+```bash
+ng g ng-alain:plugin rtl
+```
+
+> 该插件不支持移除功能，需要自行手动移除相关代码。

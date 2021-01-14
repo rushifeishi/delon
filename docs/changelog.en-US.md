@@ -14,105 +14,85 @@ NG-ALAIN strictly follows [Semantic Versioning 2.0.0](http://semver.org/lang/zh-
 
 ---
 
-### Bug Fixes
-
-* **abc:st:** fix don't interrupt when invalid get data ([#1079](https://github.com/ng-alain/delon/issues/1079)) ([d25996c](https://github.com/ng-alain/delon/commit/d25996c30b36ad2efadd0a564b849f6d5ec4d2d2))
-
-### Performance Improvements
-
-* **abc:st:** optimize reminder text ([#1081](https://github.com/ng-alain/delon/issues/1081)) ([0917357](https://github.com/ng-alain/delon/commit/0917357263917ff64a40337f89ced08e17b342ac))
-
-
-## [10.1.1](https://github.com/ng-alain/delon/compare/10.1.0...10.1.1) (2020-11-18)
+# [11.2.0](https://github.com/ng-alain/delon/compare/11.1.0...11.2.0) (2021-01-13)
 
 ### Bug Fixes
 
-* **abc:count-down:** fix timestamp of number type ([#1075](https://github.com/ng-alain/delon/issues/1075)) ([2a0fae8](https://github.com/ng-alain/delon/commit/2a0fae8169030902752fca0d1bf4d6a2647fd307))
-* **form:** fix invalid condition in array ([#1072](https://github.com/ng-alain/delon/issues/1072)) ([45374a9](https://github.com/ng-alain/delon/commit/45374a96ede62f2b36e63c62e98026170406aa6c))
-* **form:** fix invalid error style ([#1073](https://github.com/ng-alain/delon/issues/1073)) ([6f7efe7](https://github.com/ng-alain/delon/commit/6f7efe77d8402cffe4c1bc54cf760859f25f8a9f))
-* **form:** pref style in small screen ([#1074](https://github.com/ng-alain/delon/issues/1074)) ([680237a](https://github.com/ng-alain/delon/commit/680237a43f993fa24785f77abad61f552661fd42))
-
-
-# [10.1.0](https://github.com/ng-alain/delon/compare/10.0.3...10.1.0) (2020-11-17)
-
-### Bug Fixes
-
-* **abc:se:** fix invalid error style ([#1067](https://github.com/ng-alain/delon/issues/1067)) ([d8c1cee](https://github.com/ng-alain/delon/commit/d8c1cee92d6505cde2f7e97c08ee7e194723d249))
-* **chart:timeline:** can't change line when click legend ([#1068](https://github.com/ng-alain/delon/issues/1068)) ([ba6f9b3](https://github.com/ng-alain/delon/commit/ba6f9b37cba0eb9836467431ed9d8b85166062a0))
-* **form:** fix misalignment of inline mode ([#1069](https://github.com/ng-alain/delon/issues/1069)) ([18bb8a8](https://github.com/ng-alain/delon/commit/18bb8a8488facda4757e7ffcfa3022c9b4a4cd61))
+* **cli:** fix invalid version number of `screenfull` ([#1129](https://github.com/ng-alain/delon/issues/1129)) ([f9291c9](https://github.com/ng-alain/delon/commit/f9291c9852fd769d91c8f395b5462aac110d8e1a))
+* **theme:** fix router animation when changed ([#1134](https://github.com/ng-alain/delon/issues/1134)) ([dcb6284](https://github.com/ng-alain/delon/commit/dcb628495a52e4a0b61ee4ad7a692243f29c90c7))
 
 ### Features
 
-* **abc:se,sv,form:** add `optionalHelpColor` ([#1070](https://github.com/ng-alain/delon/issues/1070)) ([125606c](https://github.com/ng-alain/delon/commit/125606cff431203de7f5f640cb4479ad1a6cc19e))
-* **module:sf:date:** add `nzInputReadOnly` property ([#1066](https://github.com/ng-alain/delon/issues/1066)) ([c3b6b87](https://github.com/ng-alain/delon/commit/c3b6b878ec3cbc0f53e30fa1db3cf98b47733259))
+* **chart:number-info:** support multiple style ([#1133](https://github.com/ng-alain/delon/issues/1133)) ([876d4db](https://github.com/ng-alain/delon/commit/876d4db798dfc4cd1ee077324fe3a459bc6fff72))
 
-## [10.0.3](https://github.com/ng-alain/delon/compare/10.0.2...10.0.3) (2020-11-12)
+### BREAKING CHANGES
 
-### Bug Fixes
-
-* **g2:*:** fix view can't be refresh when the data structure changed ([#1063](https://github.com/ng-alain/delon/issues/1063)) ([ff14726](https://github.com/ng-alain/delon/commit/ff14726d3cd28345a079bb5bc38d309292148c99))
+* **cli:** use .template suffix for schematic template files, You need to manually add the `.template` suffix to the files in the `_cli-tpl` directory ([#1128](https://github.com/ng-alain/delon/issues/1128)) ([0ac979e](https://github.com/ng-alain/delon/commit/0ac979e4cc7dcbdfba923be6327e414f3991b2d7))
 
 
-## [10.0.2](https://github.com/ng-alain/delon/compare/10.0.1...10.0.2) (2020-10-15)
-
-### Bug Fixes
-
-* **abc:st:** fix http params of `process` method ([#1059](https://github.com/ng-alain/delon/issues/1059)) ([4d2dd0a](https://github.com/ng-alain/delon/commit/4d2dd0aadade43857e875562b26e7052ce54f1ba))
-
-
-## [10.0.1](https://github.com/ng-alain/delon/compare/10.0.0...10.0.1) (2020-10-02)
-
-### Bug Fixes
-
-* **abc:reuse-tab:** fix invalid this scope of hook events ([#1056](https://github.com/ng-alain/delon/issues/1056)) ([ccddfd9](https://github.com/ng-alain/delon/commit/ccddfd973794d93cb48dd37d8e28e39b121ec822))
-* **abc:st:** fix blank area in virtual scroll ([#1055](https://github.com/ng-alain/delon/issues/1055)) ([698f8ac](https://github.com/ng-alain/delon/commit/698f8acf05d994a3555fc575c3178c5c1ed26dba))
-
-
-# [10.0.0](https://github.com/ng-alain/delon/compare/9.5.5...10.0.0) (2020-09-29)
+# [11.1.0](https://github.com/ng-alain/delon/compare/11.0.2...11.1.0) (2021-01-05)
 
 ### Scaffold
 
-* **package.json** use `ng-alain-plugin-theme` instand of `scripts/themes.js` ([#1815](https://github.com/ng-alain/ng-alain/pull/1815)) ([4b7b7e8](https://github.com/ng-alain/ng-alain/commit/4b7b7e87ea610e261c5e827c5fe47b3fedb58a39))
-* **default.interceptor.ts** add refresh token by `TokenService.refresh` interface `TokenService.refresh` ([#1788](https://github.com/ng-alain/ng-alain/pull/1788)) ([dcc6149](https://github.com/ng-alain/ng-alain/commit/dcc6149813d2670e42f865415ce03df290251915))
+* support RTL
+* perf `SharedModule` module ([#1894](https://github.com/ng-alain/ng-alain/pull/1894)) ([bd0a161](https://github.com/ng-alain/ng-alain/commit/bd0a16163e4b3f9ebc4a4d80eb3829fe3ad7d731))
+* update `.browserslistrc` ([#1902](https://github.com/ng-alain/ng-alain/pull/1902)) ([77925a8](https://github.com/ng-alain/ng-alain/commit/77925a8e1dda832ce3a54c26ed09377fd6c9e09d))
+* remove duplicate dependencies ([#1902](https://github.com/ng-alain/ng-alain/pull/1902)) ([77925a8](https://github.com/ng-alain/ng-alain/commit/77925a8e1dda832ce3a54c26ed09377fd6c9e09d))
+* remove the attributes that NG-ZORRO will remove in version `12` ([#1895](https://github.com/ng-alain/ng-alain/pull/1895)) ([2272a9a](https://github.com/ng-alain/ng-alain/commit/2272a9ae7e1da1b87cda3dd796e0708c33f608c1))
 
 ### Bug Fixes
 
-* **abc:reuse-tab:** fix remove tab when reuse is `false` ([#1021](https://github.com/ng-alain/delon/issues/1021)) ([e9f8ead](https://github.com/ng-alain/delon/commit/e9f8eadc6ee085fbcdc37cce184ef948ad0a0897))
-* **abc:sidebar-nav:** fix space to avoid scroll ([#1046](https://github.com/ng-alain/delon/issues/1046)) ([7efa241](https://github.com/ng-alain/delon/commit/7efa241b7cc907e7a1725179c202d839464e73bc))
-* **abc:st:** fix `width` can't be reset when refresh group columns ([#1027](https://github.com/ng-alain/delon/issues/1027)) ([6f86d8d](https://github.com/ng-alain/delon/commit/6f86d8db8f267fb5e136170ddffb54b7c23fced4))
-* **abc:st:** fix reset pi is 1 when confirm filter ([#1020](https://github.com/ng-alain/delon/issues/1020)) ([9fa5de3](https://github.com/ng-alain/delon/commit/9fa5de310a37a500ce0fe7890730d84a22fdc7a5))
-* **cli:** fix lose `</div>` in index.html ([#1030](https://github.com/ng-alain/delon/issues/1030)) ([a64f9ef](https://github.com/ng-alain/delon/commit/a64f9efdf73f3a3fea46ae664dca742dba8af18a))
-* **form:object:** fix misalignment ([#1037](https://github.com/ng-alain/delon/issues/1037)) ([ed24223](https://github.com/ng-alain/delon/commit/ed24223150a540e2e17bf4560125acf1628e71be))
-* **form:radio:** fix can't disabled item ([#1033](https://github.com/ng-alain/delon/issues/1033)) ([94998e1](https://github.com/ng-alain/delon/commit/94998e192119c40fca7ec6405b2a0ac0f222161d))
-* **form:widget:string:** fix `autofocus` compatibility ([#1028](https://github.com/ng-alain/delon/issues/1028)) ([3f033c5](https://github.com/ng-alain/delon/commit/3f033c5657d82bf7a5de20fe54ea43e74bb42027))
-* **mock:** show params in log ([#1017](https://github.com/ng-alain/delon/issues/1017)) ([3d01921](https://github.com/ng-alain/delon/commit/3d019217aadfca9868f3bf500dbbfd205d7fcb26))
-* **theme:http:** fix ingored value handling when params is `HttpParams` type ([#1016](https://github.com/ng-alain/delon/issues/1016)) ([47ff3c3](https://github.com/ng-alain/delon/commit/47ff3c3e0b88a0312d4948e928931037d02addf8))
-* **theme:menu:** fix processed logically of `setItem` method ([#1044](https://github.com/ng-alain/delon/issues/1044)) ([120f425](https://github.com/ng-alain/delon/commit/120f425b2e58869a307862950bbe23a687eaeb42))
+* **auth:** fix always trigger refresh event in jwt ([#1115](https://github.com/ng-alain/delon/issues/1115)) ([1ef2369](https://github.com/ng-alain/delon/commit/1ef23696d5ff8de8133cbe2d5e7a53cedee2f5d6))
+* **cli:plugin:icon:** fix support conditional expression ([#1121](https://github.com/ng-alain/delon/issues/1121)) ([a481c1c](https://github.com/ng-alain/delon/commit/a481c1c257edaac603852c0096c5f4a4ecb371f5))
 
 ### Features
 
-* **abc:onboarding:** add onboarding component ([#986](https://github.com/ng-alain/delon/issues/986)) ([fbe46d5](https://github.com/ng-alain/delon/commit/fbe46d5e811b0b4ee9815369e4e6044256a3b40d))
-* **abc:down-file:** add `pre` property ([#1032](https://github.com/ng-alain/delon/issues/1032)) ([5538ef8](https://github.com/ng-alain/delon/commit/5538ef8b34e74fe897fdd39272edbb002dbdfb5b))
-* **abc:reuse-tab:** add `routeParamMatchMode` property ([#1018](https://github.com/ng-alain/delon/issues/1018)) ([05876ca](https://github.com/ng-alain/delon/commit/05876caa2c64ee5f5f4159e7f8aa68ba5fe50298))
-* **abc:reuse-tab:** add lifecycle hook interfaces ([#1047](https://github.com/ng-alain/delon/issues/1047)) ([cba82ea](https://github.com/ng-alain/delon/commit/cba82eae078a5e2d419ea12f8350d76ac76dac06))
-* **abc:reuse-tab:** add type of `_onReuseInit` ([#1026](https://github.com/ng-alain/delon/issues/1026)) ([69a04ee](https://github.com/ng-alain/delon/commit/69a04ee16c77ffd42475c25a0db0cc0036c13676))
-* **abc:st:** add `className` of button ([#1034](https://github.com/ng-alain/delon/issues/1034)) ([26f60ce](https://github.com/ng-alain/delon/commit/26f60cec7e2a53f5d91c1c6c0a8428567fc39781))
-* **abc:st:** add link title when type is link ([#1031](https://github.com/ng-alain/delon/issues/1031)) ([09dcc8d](https://github.com/ng-alain/delon/commit/09dcc8dc5994e1fbdea4b68395a25b00f12cde7e))
-* **abc:st:** support resizable headers ([#1049](https://github.com/ng-alain/delon/issues/1049)) ([08de51c](https://github.com/ng-alain/delon/commit/08de51ce6efadd51d9e917a3e039f66bf4bc9c9f))
-* **abc:st:** support TemplateRef of render & renderTitle ([#1050](https://github.com/ng-alain/delon/issues/1050)) ([be4f6da](https://github.com/ng-alain/delon/commit/be4f6dab85ccaa06ac9522a64842ef5bdba8f548))
-* use `ng-alain-plugin-theme` instand of `scripts/themes.js` ([#1039](https://github.com/ng-alain/delon/issues/1039)) ([6c8e571](https://github.com/ng-alain/delon/commit/6c8e5710259ae13e06f00fef1c99a87773f988aa))
-* **abc:st:** support array parameters of mulit sort ([#1015](https://github.com/ng-alain/delon/issues/1015)) ([e1119f5](https://github.com/ng-alain/delon/commit/e1119f5c98e883f8544e9e181464495095f34c14))
-* **auth:** add `refresh` event ([#1011](https://github.com/ng-alain/delon/issues/1011)) ([3388e1f](https://github.com/ng-alain/delon/commit/3388e1fb071b99e02f87168ad8223101fe7f9c4d))
-* **chart:water-wave:** add `render()` method ([#1014](https://github.com/ng-alain/delon/issues/1014)) ([c3d31c4](https://github.com/ng-alain/delon/commit/c3d31c4a1b6f116e88bb849c88999fccd8ee7f69))
-* **cli:** use cnpm to interrupt the installation ([#1036](https://github.com/ng-alain/delon/issues/1036)) ([b2ff9e1](https://github.com/ng-alain/delon/commit/b2ff9e186d570590cd5d1fe79be545b4c2b142d3))
+* **abc:st:** add `pureList` method ([#1126](https://github.com/ng-alain/delon/issues/1126)) ([70270f8](https://github.com/ng-alain/delon/commit/70270f8bb4914e5ad2bd4d769f121131b4e98944))
+* **abc:st:** support item type of `setRow` ([#1119](https://github.com/ng-alain/delon/issues/1119)) ([9ea783e](https://github.com/ng-alain/delon/commit/9ea783e327d206b8cc8ad0d10cd2b56bd454d173))
+* **chart:** lazy load g2 libary ([#1123](https://github.com/ng-alain/delon/issues/1123)) ([cb7b5bb](https://github.com/ng-alain/delon/commit/cb7b5bbbbaeb218ac4e912275cd77e97dfc6e7e2))
+* **theme:** add `RTLService` service ([#1120](https://github.com/ng-alain/delon/issues/1120)) ([1f4f67b](https://github.com/ng-alain/delon/commit/1f4f67b239f6ea7227aca046ba9110642a43e774))
+* **cli:plugin:rtl** add `ng g ng-alain:plugin rtl` plugin ([#1118](https://github.com/ng-alain/delon/issues/1118)) ([a5dc52e](https://github.com/ng-alain/delon/commit/a5dc52e0e180b18450e1d07537ff3da865c166b2))
 
-**Remove all deprecation items declared in `9.x`, including the following:**
+### Performance Improvements
 
-| Package | Component | Deprecation |
-|---|----|-----|
-| `@delon/chart` | `tag-cloud` | Date item `x`, `category` |
-| `@delon/chart` | `timeline` | Date item `x` |
-| `@delon/util` | `lazy` | `LazyResult.loaded` |
+* **theme:** perf [@enable-all-colors](https://github.com/enable-all-colors)` default is `false` ([#1113](https://github.com/ng-alain/delon/issues/1113)) ([d03c8fb](https://github.com/ng-alain/delon/commit/d03c8fb1344b8d692e987fcd259e7d58417ec9dc))
+
+
+## [11.0.2](https://github.com/ng-alain/delon/compare/11.0.1...11.0.2) (2020-12-23)
+
+### Bug Fixes
+
+* **cli:ng-add:** include color.less & theme css files ([#1111](https://github.com/ng-alain/delon/issues/1111)) ([5beca2f](https://github.com/ng-alain/delon/commit/5beca2fe36c64e5fdba6732facd276311ac6291b))
+* **sf:select:** fix invalid loading status ([#1110](https://github.com/ng-alain/delon/issues/1110)) ([a147f95](https://github.com/ng-alain/delon/commit/a147f95cc1d8d0c7524827cdd732b3ece47490cb))
+* **theme:_HttpClient:** fix load status allow multiple requests ([#1109](https://github.com/ng-alain/delon/issues/1109)) ([9e3dc29](https://github.com/ng-alain/delon/commit/9e3dc29782bc9334e62abbf6afccb5a62e903653))
+
+
+## [11.0.1](https://github.com/ng-alain/delon/compare/11.0.0...11.0.1) (2020-12-22)
+
+### Bug Fixes
+
+* **cli:** remove tslint-language-service depend ([#1106](https://github.com/ng-alain/delon/issues/1106)) ([70ebb94](https://github.com/ng-alain/delon/commit/70ebb94c98116381c5dc32a07f3254675a56f6a3))
+
+# [11.0.0](https://github.com/ng-alain/delon/compare/10.1.3...11.0.0) (2020-12-22)
+
+
+### Bug Fixes
+
+* **sf:** fix invalid empty value of `pathValue` property ([#1099](https://github.com/ng-alain/delon/issues/1099)) ([dad5ed0](https://github.com/ng-alain/delon/commit/dad5ed045d5c559cb2e4ab3b92f297e7c1ee9f3c))
+* **util:time:** fix invalid format `toDate` ([#1093](https://github.com/ng-alain/delon/issues/1093)) ([3b97fc3](https://github.com/ng-alain/delon/commit/3b97fc3f33a58ff2701df52d1a0a055dfc523165))
+* **util:array:** fix non-empty root parent id value should be return empty array ([#1084](https://github.com/ng-alain/delon/issues/1084)) ([95c0946](https://github.com/ng-alain/delon/commit/95c0946f3dff1399ca567ad17dccc5a58542bb65))
+
+### Features
+
+* **cli:** Use source-map-explorer instead of webpack-bundle-analyzer ([#1091](https://github.com/ng-alain/delon/issues/1091)) ([30a3dc9](https://github.com/ng-alain/delon/commit/30a3dc972f02138fbd572114789738a957454b3d))
+* **cli:module:** feat auto import routing module to top routing module ([#1100](https://github.com/ng-alain/delon/issues/1100)) ([da46d3c](https://github.com/ng-alain/delon/commit/da46d3c496cc13adc8430ed9bea2829a435d4b68))
+* **form:textarea:** add `change`, `focus`, `blur` events ([#1096](https://github.com/ng-alain/delon/issues/1096)) ([8ae609c](https://github.com/ng-alain/delon/commit/8ae609c8459cce3db0d9973a63f3e1e35547ec98))
+* **module:theme:** adding French locale ([#1094](https://github.com/ng-alain/delon/issues/1094)) ([b20259a](https://github.com/ng-alain/delon/commit/b20259a787ca76671e9578ada060737ce32a6a92))
+* **sf:** Allow use of `setVisible` method ([#1098](https://github.com/ng-alain/delon/issues/1098)) ([fb46405](https://github.com/ng-alain/delon/commit/fb464050607effa595bae9f679c5097131039003))
+* **sf:select:**  add `searchDebounceTime` property ([#1097](https://github.com/ng-alain/delon/issues/1097)) ([0fa1e70](https://github.com/ng-alain/delon/commit/0fa1e70a88a6cc400ff036b92556ebf3a67e33db))
+* **theme:** add `layout-default`, `layout-blank`, `setting-drawer`, `theme-btn` theme components ([#1101](https://github.com/ng-alain/delon/issues/1101)) ([9703641](https://github.com/ng-alain/delon/commit/9703641147cb49b9853b1cb175241793177a5bff))
+* **abc:pdf:** add `pdf` components ([#1086](https://github.com/ng-alain/delon/issues/1086)) ([2882a52](https://github.com/ng-alain/delon/commit/2882a5283ebc869afb33db476de9167e8def5de0))
+* **abc:xlsx:** support utf8 file format ([#1088](https://github.com/ng-alain/delon/issues/1088)) ([59ff03b](https://github.com/ng-alain/delon/commit/59ff03bf8474d311a6d196bf993e7679fbb29ebf))
 
 ## Old Version
 
